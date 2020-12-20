@@ -5,7 +5,7 @@
 	branch = v2.1
 [submodule "deps/dpdk"]
 	path = deps/dpdk
-	url = https://gitlab.lrz.de/dumpster/dpdk
+	url = https://pos:PBsdrFctFkxTSjrYiudM@github.com/gallenmu/dpdk
 	ignore = untracked
 	branch = v20.08-libmoon
 [submodule "deps/pciids"]
