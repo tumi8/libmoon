@@ -34,7 +34,7 @@ end
 
 function dev:onlyRead(value, name)
 	local val = dpdkc.read_reg32(self.id, value)
-	print(name .. ' ' .. val)
+	print(name .. ' ' .. val .. ', self.id: ' .. self.id)
 end
 
 function dev:enableRxTimestampsAllPackets(queue)
