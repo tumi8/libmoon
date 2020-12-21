@@ -1,20 +1,19 @@
 local mod = {}
 
 local dpdkc = require "dpdkc"
-local ffi = require "ffi"
+local ffi   = require "ffi"
 
-mod.net_i40e = require "driver.i40e"
-mod.net_ixgbe = require "driver.ixgbe"
-mod.net_ixgbevf = require "driver.ixgbevf"
+mod.net_ice       = require "driver.ice"
+mod.net_i40e      = require "driver.i40e"
+mod.net_ixgbe     = require "driver.ixgbe"
+mod.net_ixgbevf   = require "driver.ixgbevf"
 mod.net_e1000_igb = require "driver.igb"
-mod.net_e1000_em = require "driver.igb"
-mod.net_virtio = require "driver.virtio"
-mod.net_vmxnet3 = require "driver.vmxnet3"
-mod.net_mlx5 = require "driver.mlx5"
-mod.net_ena = require "driver.ena"
-mod.net_ice = require "driver.ice"
-mod.net_iavf = require "driver.iavf"
-
+mod.net_iavf 	  = require "driver.iavf"
+mod.net_e1000_em  = require "driver.igb"
+mod.net_virtio    = require "driver.virtio"
+mod.net_vmxnet3   = require "driver.vmxnet3"
+mod.net_mlx5      = require "driver.mlx5"
+mod.net_ena       = require "driver.ena"
 
 function mod.initDriver(dev)
 	local device = require "device"
