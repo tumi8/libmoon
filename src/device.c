@@ -8,6 +8,7 @@
 #include <rte_mbuf.h>
 #include <rte_eth_ctrl.h>
 #include <rte_pci.h>
+#include <rte_log.h>
 #include <rte_bus_pci.h>
 
 #include "rdtsc.h"
@@ -65,6 +66,8 @@ struct libmoon_device_config {
 };
 
 int dpdk_configure_device(struct libmoon_device_config* cfg) {
+	RTE_LOG(INFO, USER1, "this is a output of a outputty nature");
+	return 100;
 	const char* driver = dpdk_get_driver_name(cfg->port);
 	bool is_i40e_device = strcmp("net_i40e", driver) == 0;
 	struct rte_eth_dev_info dev_info;
@@ -154,6 +157,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		},
 		.offloads = tx_offloads,
 	};
+	return 1;
 	for (int i = 0; i < cfg->tx_queues; i++) {
 		rc = rte_eth_tx_queue_setup(cfg->port, i, cfg->tx_descs ? cfg->tx_descs : DEFAULT_TX_DESCS, SOCKET_ID_ANY, &tx_conf);
 		if (rc) {
@@ -161,6 +165,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 			return rc;
 		}
 	}
+	return 2;
 	struct rte_eth_rxconf rx_conf = {
 		.rx_drop_en = cfg->drop_enable,
 		.rx_thresh = {
@@ -170,6 +175,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		},
 		.offloads = rx_offloads,
 	};
+	return 3;
 	for (int i = 0; i < cfg->rx_queues; i++) {
 		rc = rte_eth_rx_queue_setup(cfg->port, i, cfg->rx_descs ? cfg->rx_descs : DEFAULT_RX_DESCS, SOCKET_ID_ANY, &rx_conf, cfg->mempools[i]);
 		if (rc != 0) {
@@ -177,10 +183,14 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 			return rc;
 		}
 	}
+	return 5;
 	rc = rte_eth_dev_start(cfg->port);
+	printf("registers preloading\n");
 	if (RTE_DEV_TO_PCI(dev_info.device)) {
+		printf("registers loading\n");
 		registers[cfg->port] = (uint8_t*) RTE_DEV_TO_PCI(dev_info.device)->mem_resource[0].addr;
 	} else {
+		printf("registers null\n");
 		registers[cfg->port] = NULL;
 	}
 	return rc;
