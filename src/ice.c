@@ -19,9 +19,10 @@ void* dpdk_get_ice_dev_hw_addr(int port) {
 	return ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private)->hw_addr;
 }
 
-void ice_init_timer() {
-	printf("ice_init_timer() start");
-	printf("ice_init_timer() stop");
+void ice_init_timer(int port) {
+	printf("ice_init_timer(port=%i) start\n", port);
+	//wr32(hw, GLTSYN_SYNC_DLAY, 0);
+	printf("ice_init_timer(port=%i) stop\n", port);
 	return;
 }
 
