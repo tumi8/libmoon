@@ -11,6 +11,7 @@ void* dpdk_get_eth_dev(int port);
 void* dpdk_get_i40e_dev(int port);
 void* dpdk_get_ice_dev(int port);
 void* dpdk_get_ice_dev_hw_addr(int port);
+void ice_init_timer();
 int dpdk_get_pci_function(int port);
 const char* dpdk_get_driver_name(int port);
 int dpdk_get_i40e_vsi_seid(int port);
