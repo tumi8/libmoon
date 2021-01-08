@@ -60,7 +60,7 @@ void ice_init_timer(int port) {
         //      wr32(hw, PF_SB_REM_DEV_CTL, regval);
         //}
         /* Write the increment time value to PHY and LAN */
-        status = ice_ptp_set_increment(pf, 0);
+//status = ice_ptp_set_increment(pf, 0);
         //if (status)
         //        goto err_exit;
         
