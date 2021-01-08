@@ -6,8 +6,12 @@
 //#include <base/i40e_register.h>
 //#include <base/i40e_prototype.h>
 #include <ice_type.h>
+#include <ice_common.h>
+#include <ice_sbq_cmd.h>
 //#include <virtchnl.h>
 #include <ice_ethdev.h>
+
+#define ETH_GLTSYN_ENA(_i)		(0x03000348 + ((_i) * 4))
 
 void* dpdk_get_ice_dev(int port) {
 	printf("dpdk_get_ice_dev() called");
@@ -22,8 +26,12 @@ void* dpdk_get_ice_dev_hw_addr(int port) {
 void ice_init_timer(int port) {
 	printf("ice_init_timer(port=%i) start\n", port);
 	
-	u32 regval;
-	u8 master_idx;
+	u32 regval, addr;
+	u8 master_idx, tmr_idx;
+        struct ice_sbq_msg_input phy_msg;
+	struct ice_hw *hw;
+	struct ice_pf *pf;
+	enum ice_status status;
 
 	master_idx = 0;
 
@@ -31,12 +39,23 @@ void ice_init_timer(int port) {
          *  The following code is based on ice_ptp_init() in ice_ptp.c of non-DPDK ice driver.
          */
 
-	struct ice_hw *hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
-	wr32(hw, GLTSYN_SYNC_DLAY, 0);
+	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
+	pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
+	
+	wrp32(hw, GLTSYN_SYNC_DLAY, 0);
 	/* Enable master clocks */
-	wr32(hw, GLTSYN_ENA(master_idx), GLTSYN_ENA_TSYN_ENA_M);
+	wrp32(hw, GLTSYN_ENA(master_idx), GLTSYN_ENA_TSYN_ENA_M);
 
-	//status = ice_ptp_ena_phy_time_syn_ext(pf);
+	/* communicate with PHY */
+        tmr_idx = 0; //hw->func_caps.ts_func_info.tmr_index_owned; does not exist in dpdk driver :(
+	addr = ETH_GLTSYN_ENA(tmr_idx);
+	phy_msg.dest_dev = 0x2;
+        phy_msg.msg_addr_low = ICE_LO_WORD(addr);
+        phy_msg.msg_addr_high = ICE_HI_WORD(addr);
+        phy_msg.opcode = ice_sbq_msg_wr;
+        phy_msg.data = GLTSYN_ENA_TSYN_ENA_M;
+	printf("send message to phy: {\n dest_dev=%i, opcode=%i, msg_addr_low=%i, msg_addr_high=%i, data=%i\n }\n", phy_msg.dest_dev, phy_msg.opcode, phy_msg.msg_addr_low, phy_msg.msg_addr_high, phy_msg.data);
+	status = ice_sbq_rw_reg(hw, &phy_msg);
 
         regval = rd32(hw, GLTSYN_STAT(master_idx));
 
@@ -44,14 +63,14 @@ void ice_init_timer(int port) {
          * to zero
          */
         regval &= 0xFFFFFF08;
-        wr32(hw, GLTSYN_STAT(master_idx), regval);
+        wrp32(hw, GLTSYN_STAT(master_idx), regval);
 
         regval = rd32(hw, GLINT_TSYN_PHY);
         /* Do not touch the reserved bits and set other bits
          * to zero
          */
         regval &= 0xFFFFFFE0;
-        wr32(hw, GLINT_TSYN_PHY, regval);
+        wrp32(hw, GLINT_TSYN_PHY, regval);
 
 	//#define PF_SB_REM_DEV_CTL_PHY0  BIT(2)
         //if (ice_is_generic_mac(hw)) {
