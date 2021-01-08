@@ -1,7 +1,5 @@
 #include <rte_config.h>
 #include <rte_ethdev.h> 
-// required for i40e_type.h
-// (structs have a different layout if left undefined....)
 
 // i40e_ethdev.h depends on lots of stuff that it doesn't include
 //#define PF_DRIVER
@@ -19,6 +17,12 @@ void* dpdk_get_ice_dev(int port) {
 void* dpdk_get_ice_dev_hw_addr(int port) {
 	printf("dpdk_get_ice_dev() called");
 	return ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private)->hw_addr;
+}
+
+void ice_init_timer() {
+	printf("ice_init_timer() start");
+	printf("ice_init_timer() stop");
+	return;
 }
 
 //int dpdk_get_i40e_vsi_seid(int port) {

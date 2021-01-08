@@ -38,6 +38,7 @@ function dev:onlyRead(value, name)
 end
 
 function dev:enableRxTimestampsAllPackets(queue)
+	dpdkc.ice_init_timer()
 	print('has RX timestamp all packets')
 
 	--udpPort = udpPort or 319
@@ -46,23 +47,23 @@ function dev:enableRxTimestampsAllPackets(queue)
 	--val = bit.band(val, bit.bnot(TSYNCRXCTL_TYPE_MASK))
 	--val = bit.bor(val, bit.lshif9t(2, TSYNCRXCTL_TYPE_OFFS))
 	--dpdkc.write_reg32(self.id, TSYNCRXCTL, val)
-	self:readAndSet(GLTSYN_SYNC_DLAY, 'GLTSYN_SYNC_DLAY', 0x0)
+	--self:readAndSet(GLTSYN_SYNC_DLAY, 'GLTSYN_SYNC_DLAY', 0x0)
 
-	self:onlyRead(GLTSYN_ENA0, 'GLTSYN_ENA0')
+	--self:onlyRead(GLTSYN_ENA0, 'GLTSYN_ENA0')
 	--self:onlyRead(GLTSYN_ENA1, 'GLTSYN_ENA1')
-	self:readAndSet(GLTSYN_ENA0, 'GLTSYN_ENA0', 0x1)
+	--self:readAndSet(GLTSYN_ENA0, 'GLTSYN_ENA0', 0x1)
 	--self:readAndSet(GLTSYN_ENA1, 'GLTSYN_ENA1', 0x1)
 
-	local val = dpdkc.read_reg32(self.id, GLTSYN_STAT0)
-	val = bit.band(val, 0xFFFFFF08)
-	self:readAndSet(GLTSYN_STAT0, 'GLTSYN_STAT0', val)
+	--local val = dpdkc.read_reg32(self.id, GLTSYN_STAT0)
+	--val = bit.band(val, 0xFFFFFF08)
+	--self:readAndSet(GLTSYN_STAT0, 'GLTSYN_STAT0', val)
 	--local val = dpdkc.read_reg32(self.id, GLTSYN_STAT1)
 	--val = bit.band(val, 0xFFFFFF08)
 	--self:readAndSet(GLTSYN_STAT1, 'GLTSYN_STAT1', val)
 
-	local val = dpdkc.read_reg32(self.id, GLINT_TSYN_PHY)
-	val = bit.band(val, 0xFFFFFFE0)
-	self:readAndSet(GLINT_TSYN_PHY, 'GLINT_TSYN_PHY', val)
+	--local val = dpdkc.read_reg32(self.id, GLINT_TSYN_PHY)
+	--val = bit.band(val, 0xFFFFFFE0)
+	--self:readAndSet(GLINT_TSYN_PHY, 'GLINT_TSYN_PHY', val)
 
 	--local val = dpdkc.read_reg32(self.id, PF_SB_REM_DEV_CTL)
         --local val = bit.bor(val, 0x2) -- PF_SB_REM_DEV_CTL_PHY0
