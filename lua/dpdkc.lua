@@ -314,7 +314,7 @@ ffi.cdef[[
 	int dpdk_get_i40e_vsi_seid(int port);
 	void* dpdk_get_ice_dev(int port);
 	void* dpdk_get_ice_dev_hw_addr(int port);
-	void ice_init_timer();
+	void ice_init_timer(int port);
 	uint8_t dpdk_get_pci_function(uint8_t port);
 	int dpdk_get_max_ports();
 	int rte_eth_dev_mac_addr_add(uint8_t port, void* mac, uint32_t pool);

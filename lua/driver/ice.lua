@@ -38,7 +38,7 @@ function dev:onlyRead(value, name)
 end
 
 function dev:enableRxTimestampsAllPackets(queue)
-	dpdkc.ice_init_timer()
+	dpdkc.ice_init_timer(self.id)
 	print('has RX timestamp all packets')
 
 	--udpPort = udpPort or 319
