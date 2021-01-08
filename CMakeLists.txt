@@ -14,6 +14,7 @@ SET(FILES
 	src/task
 	src/device
 	src/i40e
+	src/ice
 	src/util
 	src/lifecycle
 	src/barrier
