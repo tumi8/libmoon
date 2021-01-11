@@ -14,7 +14,6 @@ SET(FILES
 	src/task
 	src/device
 	src/i40e
-	src/iavf
 	src/ice
 	src/util
 	src/lifecycle
