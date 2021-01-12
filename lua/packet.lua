@@ -70,6 +70,9 @@ function pkt:getTimestamp(dev)
 			low = timestamp[0]
 			high = timestamp[1]
 			return high * 10^9 + low
+		elseif bit.bor(self.ol_flags, dpdk.PKT_RX_TIMESTAMP) ~= 0 then
+			-- ice-style NICs that set the PKT_RX_TIMESTAMP flag and use the timestamp field
+			return tonumber(ffi.cast("uint64_t", self.timestamp))
 		else
 			-- TODO: this is only tested with the Intel 82580 NIC at the moment
 			-- the datasheet claims that low and high are swapped, but this doesn't seem to be the case
