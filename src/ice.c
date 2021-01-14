@@ -1,14 +1,9 @@
 #include <rte_config.h>
-#include <rte_ethdev.h> 
+#include <rte_ethdev.h>
 
-// i40e_ethdev.h depends on lots of stuff that it doesn't include
-//#define PF_DRIVER
-//#include <base/i40e_register.h>
-//#include <base/i40e_prototype.h>
 #include <ice_type.h>
 #include <ice_common.h>
 #include <ice_sbq_cmd.h>
-//#include <virtchnl.h>
 #include <ice_ethdev.h>
 
 // XXX start of copied (and modified) ice driver code
@@ -81,8 +76,6 @@ static enum ice_status ice_phy_port_reg_write(struct ice_hw *hw, struct ice_pf *
 // XXX end of copied (and modified) ice driver code
 
 void ice_init_timer(int port) {
-	printf("ice_init_timer(port=%i) start\n", port);
-	
 	u32 regval;
 	u8 tmr_index_owned;
 	struct ice_sbq_msg_input;

@@ -196,7 +196,6 @@ function mod.config(args)
 	for i, v in ipairs(args.mempools) do
 		mempools[i - 1] = v
 	end
-	print("lua: dpdkc.dpdk_configure_device()")
 	local rc = dpdkc.dpdk_configure_device(ffi.new("struct libmoon_device_config", {
 		port = args.port,
 		mempools = mempools,
@@ -211,8 +210,6 @@ function mod.config(args)
 		strip_vlan = args.stripVlan,
 		enable_rss_symm = args.enable_rss_symm
 	}))
-	print('output of rc:')
-	print(rc)
 	if rc ~= 0 then
 	    log:fatal("Could not configure device %d: error %s", args.port, strError(rc))
 	end

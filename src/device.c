@@ -8,7 +8,6 @@
 #include <rte_mbuf.h>
 #include <rte_eth_ctrl.h>
 #include <rte_pci.h>
-#include <rte_log.h>
 #include <rte_bus_pci.h>
 
 #include "rdtsc.h"
@@ -27,12 +26,10 @@ static uint8_t symm_rss_hash_key[SYMM_RSS_HASHKEY_LENGTH] = { 0x6D, 0x5A, 0x6D, 
 static volatile uint8_t* registers[RTE_MAX_ETHPORTS];
 
 uint32_t read_reg32(uint16_t port, uint32_t reg) {
-	printf("%p\n", (void*) registers[port]);
 	return *(volatile uint32_t*)(registers[port] + reg);
 }
 
 void write_reg32(uint16_t port, uint32_t reg, uint32_t val) {
-	printf("%p\n", (void*) registers[port]);
 	*(volatile uint32_t*)(registers[port] + reg) = val;
 }
 
@@ -68,7 +65,6 @@ struct libmoon_device_config {
 };
 
 int dpdk_configure_device(struct libmoon_device_config* cfg) {
-	printf("outputty\n");
 	const char* driver = dpdk_get_driver_name(cfg->port);
 	bool is_i40e_device = strcmp("net_i40e", driver) == 0;
 	struct rte_eth_dev_info dev_info;
@@ -158,7 +154,6 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		},
 		.offloads = tx_offloads,
 	};
-	printf("ehereherhere\n");
 	for (int i = 0; i < cfg->tx_queues; i++) {
 		rc = rte_eth_tx_queue_setup(cfg->port, i, cfg->tx_descs ? cfg->tx_descs : DEFAULT_TX_DESCS, SOCKET_ID_ANY, &tx_conf);
 		if (rc) {
@@ -183,12 +178,9 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		}
 	}
 	rc = rte_eth_dev_start(cfg->port);
-	printf("registers preloading\n");
 	if (RTE_DEV_TO_PCI(dev_info.device)) {
 		registers[cfg->port] = (uint8_t*) RTE_DEV_TO_PCI(dev_info.device)->mem_resource[0].addr;
-		printf("registers loading %p\n", (void*) registers[cfg->port]);
 	} else {
-		printf("registers null\n");
 		registers[cfg->port] = NULL;
 	}
 	return rc;
