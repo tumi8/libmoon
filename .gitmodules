@@ -5,9 +5,9 @@
 	branch = v2.1
 [submodule "deps/dpdk"]
 	path = deps/dpdk
-	url = https://pos:neoCisAnz-XufEh-5Bvd@gitlab.lrz.de/dumpster/dpdk 
+	url = https://pos:neoCisAnz-XufEh-5Bvd@gitlab.lrz.de/dumpster/dpdk
 	ignore = untracked
-	branch = v20.08-libmoon
+	branch = hs/dpdk-20.08
 [submodule "deps/pciids"]
 	path = deps/pciids
 	url = https://github.com/gallenmu/pciids
