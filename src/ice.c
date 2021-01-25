@@ -87,6 +87,11 @@ void ice_init_timer(int port) {
 
 	tmr_index_owned = 0;
 
+	wr32(hw, GLTSYN_SYNC_DLAY, 0);
+	wr32(hw, GLTSYN_ENA(tmr_index_owned), GLTSYN_ENA_TSYN_ENA_M);
+#define ETH_GLTSYN_ENA(_i)		(0x03000348 + ((_i) * 4))
+	ice_phy_port_reg_write(hw, pf, rmn_0, ETH_GLTSYN_ENA(tmr_index_owned), GLTSYN_ENA_TSYN_ENA_M);
+
 	// 9.7.4.3 Initializing the 1588 Timers and the INCVAL
 	// 9.7.4.3 1. Read the PFTSYN_SEM.BUSY flag until it is zero (0b).
 #define PFTSYN_SEM_BYTES	4
