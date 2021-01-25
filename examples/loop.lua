@@ -53,6 +53,10 @@ function forward(rxQueue, txQueue)
 	while lm.running() do -- check if Ctrl+c was pressed
 		-- receive one or more packets from the queue
 		local count = rxQueue:recv(bufs)
+		for i = 1, count do
+			local timestamp = bufs[i]:getTimestamp(rxQueue.dev)
+			print("timestamp: " .. timestamp)
+		end
 		-- send out all received bufs on the other queue
 		-- the bufs are free'd implicitly by this function
 		txQueue:sendN(bufs, count)
