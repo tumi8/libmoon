@@ -45,7 +45,7 @@ done
 # TODO: this should probably be a makefile
 (
 cd $(dirname "${BASH_SOURCE[0]}")
-git submodule update --init --recursive
+git -c submodule."deps/dpdk".update=none submodule update --init --recursive
 
 NUM_CPUS=$(cat /proc/cpuinfo  | grep "processor\\s: " | wc -l)
 
@@ -61,19 +61,13 @@ cd deps/dpdk-kmods/linux/igb_uio
 make -j $NUM_CPUS
 )
 
+export PKG_CONFIG_PATH=$(pwd)/deps/dpdk/x86_64-native-linux-gcc/lib/x86_64-linux-gnu/pkgconfig/:$PKG_CONFIG_PATH
 (
 cd deps/dpdk
-#build DPDK with the right configuration
-sed -ri 's,(CONFIG_RTE_LIBRTE_IEEE1588=).*,\1y,' config/common_base
-if ${MLX5} ; then
-	sed -ri 's,(MLX5_PMD=).*,\1y,' config/common_base
-fi
-if ${MLX4} ; then
-	sed -ri 's,(MLX4_PMD=).*,\1y,' config/common_base
-fi
-export MAKE_PAUSE=n
-make config T=x86_64-native-linux-gcc O=x86_64-native-linux-gcc
-EXTRA_CFLAGS="-Wno-error" make -j $NUM_CPUS O=x86_64-native-linux-gcc
+CC=gcc meson -Dmax_lcores=512 -Dtests=false -Ddisable_drivers=net/dpaa,net/dpaa2 --prefix=$(pwd)/x86_64-native-linux-gcc x86_64-native-linux-gcc
+echo "#define RTE_LIBRTE_IEEE1588 1" >> ./x86_64-native-linux-gcc/rte_build_config.h
+ninja -C x86_64-native-linux-gcc
+ninja -C x86_64-native-linux-gcc install
 )
 
 (
@@ -99,8 +93,8 @@ then
 else	
 	cd ../build
 fi
-cmake ${OPTIONS}..
-make -j $NUM_CPUS
+PKG_CONFIG_PATH=$PKG_CONFIG_PATH cmake ${OPTIONS}..
+PKG_CONFIG_PATH=$PKG_CONFIG_PATH make -j $NUM_CPUS
 )
 
 echo Trying to bind interfaces, this will fail if you are not root
