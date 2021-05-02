@@ -47,7 +47,7 @@ function master(args)
 end
 
 function forward(rxQueue, txQueue)
-	rxQueue.dev:enableRxTimestampsAllPackets(queue)
+	rxQueue.dev:enableRxTimestampsAllPackets()
 	-- a bufArray is just a list of buffers that we will use for batched forwarding
 	local bufs = memory.bufArray()
 	while lm.running() do -- check if Ctrl+c was pressed

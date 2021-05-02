@@ -293,7 +293,8 @@ uint16_t dpdk_receive_with_timestamps_software(uint16_t port_id, uint16_t queue_
 		uint16_t rx = rte_eth_rx_burst(port_id, queue_id, rx_pkts, nb_pkts);
 		uint16_t prev_pkt_size = 0;
 		for (int i = 0; i < rx; i++) {
-			rx_pkts[i]->udata64 = tsc + prev_pkt_size * cycles_per_byte;
+			//Disabled for debugging
+			//rx_pkts[i]->udata64 = tsc + prev_pkt_size * cycles_per_byte;
 			prev_pkt_size = rx_pkts[i]->pkt_len + 24;
 		}
 		if (rx > 0) {
