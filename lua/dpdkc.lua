@@ -19,11 +19,6 @@ ffi.cdef[[
 	struct mempool {
 	}; // dummy struct, only needed to associate it with a metatable
 
-	#define __rte_aligned(a) __attribute__((__aligned__(a)))
-	#define RTE_CACHE_LINE_MIN_SIZE 64
-	#define __rte_cache_aligned __rte_aligned(RTE_CACHE_LINE_SIZE)
-	#define __rte_cache_min_aligned __rte_aligned(RTE_CACHE_LINE_MIN_SIZE)
-
 	typedef void    *RTE_MARKER[0];
 	typedef void    *RTE_MARKER_CACHE_ALIGNED[0] __attribute__((aligned(64)));
 	typedef uint8_t  RTE_MARKER8[0];
@@ -45,31 +40,6 @@ ffi.cdef[[
 		rte_mbuf_extbuf_free_callback_t free_cb; /**< Free callback function */
 		void *fcb_opaque;                        /**< Free callback argument */
 		uint16_t refcnt;
-	};
-	enum {
-		RTE_MBUF_L2_LEN_BITS = 7,
-		RTE_MBUF_L3_LEN_BITS = 9,
-		RTE_MBUF_L4_LEN_BITS = 8,
-		RTE_MBUF_TSO_SEGSZ_BITS = 16,
-		RTE_MBUF_OUTL3_LEN_BITS = 9,
-		RTE_MBUF_OUTL2_LEN_BITS = 7,
-		RTE_MBUF_TXOFLD_UNUSED_BITS = sizeof(uint64_t) * 8 -
-			RTE_MBUF_L2_LEN_BITS -
-			RTE_MBUF_L3_LEN_BITS -
-			RTE_MBUF_L4_LEN_BITS -
-			RTE_MBUF_TSO_SEGSZ_BITS -
-			RTE_MBUF_OUTL3_LEN_BITS -
-			RTE_MBUF_OUTL2_LEN_BITS,
-		RTE_MBUF_L2_LEN_OFS = 0,
-		RTE_MBUF_L3_LEN_OFS = RTE_MBUF_L2_LEN_OFS + RTE_MBUF_L2_LEN_BITS,
-		RTE_MBUF_L4_LEN_OFS = RTE_MBUF_L3_LEN_OFS + RTE_MBUF_L3_LEN_BITS,
-		RTE_MBUF_TSO_SEGSZ_OFS = RTE_MBUF_L4_LEN_OFS + RTE_MBUF_L4_LEN_BITS,
-		RTE_MBUF_OUTL3_LEN_OFS =
-			RTE_MBUF_TSO_SEGSZ_OFS + RTE_MBUF_TSO_SEGSZ_BITS,
-		RTE_MBUF_OUTL2_LEN_OFS =
-			RTE_MBUF_OUTL3_LEN_OFS + RTE_MBUF_OUTL3_LEN_BITS,
-		RTE_MBUF_TXOFLD_UNUSED_OFS =
-			RTE_MBUF_OUTL2_LEN_OFS + RTE_MBUF_OUTL2_LEN_BITS,
 	};
 	
 	struct rte_mbuf {
