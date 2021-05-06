@@ -6,6 +6,7 @@ local ffi   = require "ffi"
 local log   = require "log"
 
 function dev:enableRxTimestampsAllPackets()
+	dpdkc.init_timestamp_dynfield_offset()
 	dpdkc.ice_init_timer(self.id)
 end
 

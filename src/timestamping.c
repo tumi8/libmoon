@@ -1,7 +1,10 @@
 #include <stdint.h>
 #include <stdlib.h>
+#include <rte_mbuf_dyn.h>
 
 #include "device.h"
+
+uint64_t timestamp_field_offset;
 
 void libmoon_sync_clocks(uint8_t port1, uint8_t port2, uint32_t timl, uint32_t timh, uint32_t adjl, uint32_t adjh) {
 	// resetting SYSTIML twice prevents a race-condition when SYSTIML is just about to overflow into SYSTIMH
@@ -50,3 +53,15 @@ void libmoon_sync_clocks(uint8_t port1, uint8_t port2, uint32_t timl, uint32_t t
 	}
 }
 
+uint64_t get_timestamp_dynfield(struct rte_mbuf *m){
+	return *RTE_MBUF_DYNFIELD(m, timestamp_field_offset, uint64_t*);
+}
+
+void set_timestamp_dynfield(struct rte_mbuf *m, uint64_t timestamp){
+	*RTE_MBUF_DYNFIELD(m, timestamp_field_offset, uint64_t*) = timestamp;
+	
+}
+
+void init_timestamp_dynfield_offset(){
+	timestamp_field_offset = rte_mbuf_dynfield_lookup(RTE_MBUF_DYNFIELD_TIMESTAMP_NAME, NULL);
+}

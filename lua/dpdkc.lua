@@ -410,7 +410,9 @@ ffi.cdef[[
 	int rte_eth_timesync_read_rx_timestamp(uint16_t port_id, struct timespec* timestamp, uint32_t timesync);
 	int rte_eth_timesync_read_time(uint16_t port_id, struct timespec* time);
 	void libmoon_sync_clocks(uint8_t port1, uint8_t port2, uint32_t timl, uint32_t timh, uint32_t adjl, uint32_t adjh);
-
+	uint64_t get_timestamp_dynfield(struct rte_mbuf *m);
+	void set_timestamp_dynfield(struct rte_mbuf *m, uint64_t timestamp);
+	void init_timestamp_dynfield_offset();
 
 	// statistics
 	void rte_eth_stats_get(uint8_t port, struct rte_eth_stats* stats);

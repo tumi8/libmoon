@@ -62,7 +62,7 @@ end
 --- @return The timestamp or nil if the packet was not time stamped.
 function pkt:getTimestamp(dev)
 	if bit.bor(self.ol_flags, dpdk.PKT_RX_IEEE1588_TMST) ~= 0 then
-		local data = ffi.cast("uint32_t* ", self:getData())
+		local data = ffi.cast("uint32_t*", self:getData())
 		local low, high
 		if dev and dev.embeddedTimestampAtEndOfBuffer then
 			-- ixgbe-style nics that support this (i.e. x550)
@@ -71,8 +71,8 @@ function pkt:getTimestamp(dev)
 			high = timestamp[1]
 			return high * 10^9 + low
 		elseif bit.bor(self.ol_flags, dpdk.PKT_RX_TIMESTAMP) ~= 0 then
-			-- ice-style NICs that set the PKT_RX_TIMESTAMP flag and use the timestamp field
-			return tonumber(ffi.cast("uint64_t", self.timestamp))
+			-- ice-style NICs that set the PKT_RX_TIMESTAMP flag and use the timestamp dynfield
+			return tonumber(dpdkc.get_timestamp_dynfield(ffi.cast('struct rte_mbuf*', self)))
 		else
 			-- TODO: this is only tested with the Intel 82580 NIC at the moment
 			-- the datasheet claims that low and high are swapped, but this doesn't seem to be the case
