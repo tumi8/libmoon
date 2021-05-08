@@ -4,6 +4,8 @@
 
 #include "device.h"
 
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
 uint64_t timestamp_field_offset;
 
 void libmoon_sync_clocks(uint8_t port1, uint8_t port2, uint32_t timl, uint32_t timh, uint32_t adjl, uint32_t adjh) {
