@@ -195,7 +195,7 @@ function pkt:offloadIPSec(idx, sec_type, esp_mode)
 	end
 
 	-- Set IPSec offload flag in advanced data transmit descriptor.
-	self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IEEE1588_TMST)
+	self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IPSEC)
 
 	-- Set 10 bit SA_IDX
 	--if idx < 0 or idx > 1023 then
