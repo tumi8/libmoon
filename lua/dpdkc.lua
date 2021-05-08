@@ -414,6 +414,9 @@ ffi.cdef[[
 	void set_timestamp_dynfield(struct rte_mbuf *m, uint64_t timestamp);
 	void init_timestamp_dynfield_offset();
 
+	//ice timestamping
+	uint64_t ice_tx_timestamps_read(int port, int slot);
+
 	// statistics
 	void rte_eth_stats_get(uint8_t port, struct rte_eth_stats* stats);
 ]]

@@ -16,55 +16,32 @@ local DST_PORT      = 1234
 local NUM_FLOWS     = 1000
 
 function configure(parser)
-	parser:argument("dev", "Devices to use"):args(2):convert(tonumber)
+	parser:argument("dev", "Devices to use"):args(1):convert(tonumber)
 	parser:option("-o --output", "File to output statistics to")
 	return parser:parse()
 end
 
 function master(args)
 	-- configure devices
-	if args.dev[1] == args.dev[2] then
-		print('you need to enter two different interfaces')
-		return
-	end
-
-	for i, dev in ipairs(args.dev) do
-		args.dev[i] = device.config{
-			port = dev,
-			txQueues = 1,
-			rxQueues = 1,
-			--rssQueues = args.threads
-		}
-	end
+	
+	args.dev = device.config({
+		port = args.dev,
+		txQueues = 1,
+		rxQueues = 1,
+		--rssQueues = args.threads
+	})
 	device.waitForLinks()
 
 	-- print stats
-	-- stats.startStatsTask{devices = args.dev, file = args.output}
+	stats.startStatsTask{devices = args.dev, file = args.output}
 
 	-- start forwarding tasks
-	lm.startTask("txSlave", args.dev[1]:getTxQueue(0))
-	lm.startTask("forward", args.dev[2]:getRxQueue(0), args.dev[2]:getTxQueue(0))
+	lm.startTask("txSlave", args.dev:getTxQueue(0))
 	lm.waitForTasks()
 end
 
-function forward(rxQueue, txQueue)
-	rxQueue.dev:enableRxTimestampsAllPackets()
-	-- a bufArray is just a list of buffers that we will use for batched forwarding
-	local bufs = memory.bufArray()
-	while lm.running() do -- check if Ctrl+c was pressed
-		-- receive one or more packets from the queue
-		local count = rxQueue:recv(bufs)
-		for i = 1, count do
-			local timestamp = bufs[i]:getTimestamp(rxQueue.dev)
-			print("RX timestamp: " .. timestamp)
-		end
-		-- send out all received bufs on the other queue
-		-- the bufs are free'd implicitly by this function
-		txQueue:sendN(bufs, count)
-	end
-end
-
 function txSlave(queue)
+	queue.dev:enableRxTimestampsAllPackets()
 	-- memory pool with default values for all packets, this is our archetype
 	local mempool = memory.createMemPool(function(buf)
 		buf:getUdpPacket():fill{
@@ -86,8 +63,8 @@ function txSlave(queue)
 		bufs:alloc(PKT_LEN)
 		for i, buf in ipairs(bufs) do
 			-- packet framework allows simple access to fields in complex protocol stacks
-			local pkt = buf:getUdpPacket()
 			buf:enableIceTxTimestamp(0)
+			local pkt = buf:getUdpPacket()
 			pkt.udp:setSrcPort(SRC_PORT_BASE + math.random(0, NUM_FLOWS - 1))
 		end
 		-- UDP checksums are optional, so using just IPv4 checksums would be sufficient here
@@ -95,7 +72,8 @@ function txSlave(queue)
 		bufs:offloadUdpChecksums()
 		-- send out all packets and frees old bufs that have been sent
 		queue:send(bufs)
-		print("TX timestamp: "..tostring(tonumber(dpdkc.ice_tx_timestamps_read(0, 0))))
+		print(tonumber(dpdkc.ice_tx_timestamps_read(1, 0)))
+
 		lm.sleepMillisIdle(1000)
 		print('sent packet')
 	end

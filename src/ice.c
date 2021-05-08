@@ -73,7 +73,83 @@ static enum ice_status ice_phy_port_reg_write(struct ice_hw *hw, struct ice_pf *
 	phy_msg.data = val;
 	return ice_ptp_send_msg_to_phy_ext(hw, pf, port, &phy_msg);
 }
+
+static int ice_phy_quad_reg_read_ext(struct ice_hw *hw, struct ice_pf *pf, u32 addr, u32 *val){
+	struct ice_sbq_msg_input phy_msg;
+	int err;
+
+	phy_msg.msg_addr_low = ICE_LO_WORD(addr);
+	phy_msg.msg_addr_high = ICE_HI_WORD(addr);
+	phy_msg.opcode = ice_sbq_msg_rd;
+
+	err = ice_ptp_send_msg_to_phy_ext(hw, pf, rmn_0, &phy_msg);
+	if (!err)
+		*val = phy_msg.data;
+
+	return err;
+}
+
+#define BYTES_PER_IDX_ADDR_L_U		8
+#define BYTES_PER_IDX_ADDR_L		4
+#define TS_EXT(_a, _port, _idx) ((_a) + (0x1000 * (_port)) + ((_idx) * BYTES_PER_IDX_ADDR_L_U))
+#define LOW_TX_MEMORY_BANK_START	0x03090000
+#define HIGH_TX_MEMORY_BANK_START	0x03090004
+
 // XXX end of copied (and modified) ice driver code
+
+// adapted from "ice_ptp_tx_hwtstamp_ext" from ice driver
+uint64_t ice_tx_timestamps_read_register(int port, int slot){
+	struct ice_hw *hw;
+	struct ice_pf *pf;
+	u32 addr;
+	u32 val = 0;
+	u8 lport;
+	int err;
+	u64 ts;
+
+	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
+	pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
+	lport = hw->port_info->lport;
+
+	addr = TS_EXT(LOW_TX_MEMORY_BANK_START, lport, slot);
+	err = ice_phy_quad_reg_read_ext(hw, pf, addr, &val);
+	if (err){
+		printf("Error on LOW READ; slot-%d", slot);
+		//TODO:: error?
+	}
+
+	ts = val;
+
+	addr = TS_EXT(HIGH_TX_MEMORY_BANK_START, lport, slot);
+	err = ice_phy_quad_reg_read_ext(hw, pf, addr, &val);
+	if (err){
+		printf("Error on HIGH READ; slot-%d", slot);
+		//TODO:: error?
+		if(!ts){
+			printf("Continue anyway?");
+		}
+	}
+
+	ts |= ((u64)val) << 32;
+
+	return ts;
+}
+
+uint64_t tx_prev_ts = 0;
+uint64_t tx_wraparound_ctr = 0;
+
+uint64_t ice_tx_timestamps_read(int port, int slot){
+	uint64_t hw_ts = ice_tx_timestamps_read_register(port, slot);
+
+	//remove sub nanosecond part and valid bit	
+	uint64_t ts = (hw_ts>>8);
+
+	if (tx_prev_ts > ts) {
+		++tx_wraparound_ctr;	
+	}
+	tx_prev_ts = ts;
+	return (tx_wraparound_ctr << 32) | ts;
+}
 
 void ice_init_timer(int port) {
 	u32 regval;

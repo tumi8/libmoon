@@ -162,6 +162,19 @@ function pkt:removeLast(bytes)
 	dpdkc.rte_pktmbuf_trim_export(self, bytes)
 end
 
+-------------------------------------------------------------------------------------------
+---- Timestamp generation flag
+-------------------------------------------------------------------------------------------
+
+function pkt:enableIceTxTimestamp(index)
+	if index>=0 and index<=64 then
+		self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IEEE1588_TMST)
+		self.timesync = index;
+	else
+		log:fatal("Invalid timestamp index")
+	end
+end
+
 -------------------------------------------------------------------------------------------------------
 ---- IPSec offloading
 -------------------------------------------------------------------------------------------------------
@@ -182,7 +195,7 @@ function pkt:offloadIPSec(idx, sec_type, esp_mode)
 	end
 
 	-- Set IPSec offload flag in advanced data transmit descriptor.
-	self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IPSEC)
+	self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IEEE1588_TMST)
 
 	-- Set 10 bit SA_IDX
 	--if idx < 0 or idx > 1023 then
