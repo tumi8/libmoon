@@ -26,9 +26,9 @@ SET(FILES
 #	src/filter
 	src/pcap
 	src/timestamping
-#	src/timestamping_i40e
-#	src/timestamping_ixgbe
-#	src/timestamping_igb
+	src/timestamping_i40e
+	src/timestamping_ixgbe
+	src/timestamping_igb
 	src/bytesizedring
 	src/pktsizedring
 )
@@ -89,9 +89,9 @@ IF(LIBMOON_BUILD_LIBRARY)
 	ADD_DEFINITIONS(-DLIBMOON_BUILD_LIB)
 	# we want libmoon.a, not liblibmoon.a
 	ADD_LIBRARY(moon STATIC ${FILES})
-	TARGET_LINK_LIBRARIES(moon ${ALL_LIBS} ${TBB} ${dpdk_STATIC_LINK_LIBRARIES} ${dpdk_STATIC_LDFLAGS} ${dpdk_STATIC_LDFLAGS_OTHER})
+	TARGET_LINK_LIBRARIES(moon ${ALL_LIBS} ${TBB} -Wl,--start-group ${dpdk_STATIC_LINK_LIBRARIES} ${dpdk_STATIC_LDFLAGS} ${dpdk_STATIC_LDFLAGS_OTHER} numa -Wl,--end-group pthread dl rt)
 ELSE()
 	ADD_EXECUTABLE(libmoon ${FILES})
-	TARGET_LINK_LIBRARIES(libmoon ${ALL_LIBS} ${TBB} ${dpdk_STATIC_LINK_LIBRARIES} ${dpdk_STATIC_LDFLAGS} ${dpdk_STATIC_LDFLAGS_OTHER})
+	TARGET_LINK_LIBRARIES(libmoon ${ALL_LIBS} ${TBB} -Wl,--start-group ${dpdk_STATIC_LINK_LIBRARIES} ${dpdk_STATIC_LDFLAGS} ${dpdk_STATIC_LDFLAGS_OTHER} numa -Wl,--end-group pthread dl rt)
 ENDIF()
 

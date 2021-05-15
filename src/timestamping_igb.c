@@ -1,5 +1,6 @@
 #include <rte_config.h>
 #include <rte_ethdev.h>
+#include <ethdev_driver.h>
 
 #include <e1000_hw.h>
 #include <e1000_ethdev.h>

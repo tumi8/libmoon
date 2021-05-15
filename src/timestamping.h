@@ -10,3 +10,7 @@ static void libmoon_reset_timecounter(struct rte_timecounter* tc) {
 	tc->nsec_frac = 0;
 	tc->cycle_last = 0;
 }
+
+uint64_t get_timestamp_dynfield(struct rte_mbuf *m);
+void set_timestamp_dynfield(struct rte_mbuf *m, uint64_t timestamp);
+void init_timestamp_dynfield_offset();

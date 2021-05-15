@@ -16,6 +16,8 @@ struct pcapRecHeader {
 };
 
 extern "C" {
+	#include "timestamping.h"
+
 	void libmoon_write_pcap(pcapRecHeader* dst, const void* packet, uint32_t len, uint32_t orig_len, uint32_t ts_sec, uint32_t ts_usec) {
 		dst->ts_sec = ts_sec;
 		dst->ts_usec = ts_usec;
@@ -39,7 +41,7 @@ extern "C" {
 		}
 		res->pkt_len = src->incl_len;
 		res->data_len = copy_len + zero_fill_len;
-		res->udata64 = src->ts_sec * 1000000ULL + src->ts_usec;
+		set_timestamp_dynfield(res, src->ts_sec * 1000000ULL + src->ts_usec);
 		uint8_t* data = rte_pktmbuf_mtod(res, uint8_t*);
 		memcpy(data, &src->data, copy_len);
 		memset(data + copy_len, 0, zero_fill_len);

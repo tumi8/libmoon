@@ -226,6 +226,7 @@ function mod.init()
 	for _, device in ipairs(devices) do
 		printf("   Device %d: %s (%s)", device.id, device.mac, green(device.name))
 	end
+	dpdkc.init_timestamp_dynfield_offset()
 	return true
 end
 
