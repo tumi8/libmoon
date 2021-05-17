@@ -372,6 +372,7 @@ ffi.cdef[[
 	void rte_eth_dev_info_get(uint16_t port_id, struct rte_eth_dev_info* info);
 	void rte_eth_dev_stop(uint16_t port_id);
 	int rte_eth_dev_fw_version_get(uint16_t port_id, char* fw_version, size_t fw_size);
+	void fdir_get_infos(uint16_t port_id);
 
 	// rx & tx
 	uint16_t rte_eth_rx_burst_export(uint16_t port_id, uint16_t queue_id, struct rte_mbuf** rx_pkts, uint16_t nb_pkts);
@@ -417,7 +418,9 @@ ffi.cdef[[
 	void init_timestamp_dynfield_offset();
 
 	//ice timestamping
-	uint64_t ice_tx_timestamps_read(int port, int slot);
+	uint64_t ice_tx_timestamps_read(int port, int slot, uint64_t* tx_prev_ts, uint64_t* tx_wraparound_ctr);
+	uint64_t ice_tx_timestamps_read_raw(int port, int slot);
+	uint64_t ice_read_current_timer(int port);
 
 	// statistics
 	void rte_eth_stats_get(uint8_t port, struct rte_eth_stats* stats);

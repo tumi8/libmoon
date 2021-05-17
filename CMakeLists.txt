@@ -23,7 +23,7 @@ SET(FILES
 	src/lock
 	src/namespaces
 	src/ring
-#	src/filter
+	src/filter
 	src/pcap
 	src/timestamping
 	src/timestamping_i40e

@@ -74,6 +74,23 @@ static enum ice_status ice_phy_port_reg_write(struct ice_hw *hw, struct ice_pf *
 	return ice_ptp_send_msg_to_phy_ext(hw, pf, port, &phy_msg);
 }
 
+static int ice_phy_port_reg_read(struct ice_hw *hw, struct ice_pf *pf, u8 port, u32 addr, u32 *val){
+	struct ice_sbq_msg_input phy_msg;
+	int err;
+
+	phy_msg.msg_addr_low = ICE_LO_WORD(addr);
+	phy_msg.msg_addr_high = ICE_HI_WORD(addr);
+	phy_msg.opcode = ice_sbq_msg_rd;
+
+	err = ice_ptp_send_msg_to_phy_ext(hw, pf, port, &phy_msg);
+	if (err)
+		return err;
+
+	*val = phy_msg.data;
+
+	return 0;
+}
+
 static int ice_phy_quad_reg_read_ext(struct ice_hw *hw, struct ice_pf *pf, u32 addr, u32 *val){
 	struct ice_sbq_msg_input phy_msg;
 	int err;
@@ -135,20 +152,45 @@ uint64_t ice_tx_timestamps_read_register(int port, int slot){
 	return ts;
 }
 
-uint64_t tx_prev_ts = 0;
-uint64_t tx_wraparound_ctr = 0;
-
-uint64_t ice_tx_timestamps_read(int port, int slot){
+uint64_t ice_tx_timestamps_read(int port, int slot, uint64_t* tx_prev_ts, uint64_t* tx_wraparound_ctr){
 	uint64_t hw_ts = ice_tx_timestamps_read_register(port, slot);
 
 	//remove sub nanosecond part and valid bit	
 	uint64_t ts = (hw_ts>>8);
 
-	if (tx_prev_ts > ts) {
-		++tx_wraparound_ctr;	
+	if ((*tx_prev_ts) > ts) {
+		(*tx_wraparound_ctr)++;	
 	}
-	tx_prev_ts = ts;
-	return (tx_wraparound_ctr << 32) | ts;
+	(*tx_prev_ts) = ts;
+	return ((*tx_wraparound_ctr) << 32) | ts;
+}
+
+uint64_t ice_read_current_timer(int port){
+	u32 timeL;
+	u32 timeH;
+	u8 tmr_index_owned;
+	struct ice_hw *hw;
+
+	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
+	tmr_index_owned = 0;
+
+	// run GLTSYN_CMD_READ_TIME command
+#define GLTSYN_CMD_READ_TIME		BIT(7)
+#define SYNC_EXEC_CMD			0x3
+
+
+	
+	wr32(hw, GLTSYN_CMD, GLTSYN_CMD_READ_TIME);
+	wr32(hw, GLTSYN_CMD_SYNC, SYNC_EXEC_CMD);
+
+	//read captured time
+	timeL = rd32(hw, GLTSYN_SHTIME_H(tmr_index_owned));
+	timeH = rd32(hw, GLTSYN_HHTIME_L(tmr_index_owned));
+
+	printf("LOW: %d\n",timeL);
+	printf("HIGH: %d\n",timeH);
+
+	return ((u64)timeH << 32) | timeL;
 }
 
 void ice_init_timer(int port) {
@@ -207,9 +249,9 @@ void ice_init_timer(int port) {
 
 	// 9.7.4.3 3. Set the GLTSYN_SHTIME (0, L, and H) and GLTSYN_SHADJ (L
 	//            and H) registers of the master timer in the E810.
-	regval = 0;
-	wr32(hw, GLTSYN_SHTIME_L(tmr_index_owned), (u32)(regval & TS_LOW_MASK));
-	wr32(hw, GLTSYN_SHTIME_H(tmr_index_owned), (u32)(regval >> 32));
+	u64 startVal = 0;
+	wr32(hw, GLTSYN_SHTIME_L(tmr_index_owned), (u32)(startVal & TS_LOW_MASK));
+	wr32(hw, GLTSYN_SHTIME_H(tmr_index_owned), (u32)(startVal >> 32));
 	wr32(hw, GLTSYN_SHTIME_0(tmr_index_owned), 0);
 
 	// 9.7.4.3 4. Set the CMD to INIT INCVAL + TIMER and the SEL_MASTER as

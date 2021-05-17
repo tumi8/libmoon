@@ -5,28 +5,94 @@
 #include <rte_config.h>
 #include <rte_common.h>
 #include <rte_ethdev.h>
+#include <rte_pmd_i40e.h>
+#include <rte_pmd_ixgbe.h>
 
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
-// copy & pasted from dpdk test-pmd/config.c
+//copied from test-pmd/testpmd.h
+typedef uint16_t portid_t;
+#define RTE_PORT_ALL            (~(portid_t)0x0)
 
+enum print_warning {
+	ENABLED_WARN = 0,
+	DISABLED_WARN
+};
+
+// copy & pasted from dpdk test-pmd/config.c
 static char *flowtype_to_str(uint16_t flow_type);
+
+static int
+get_fdir_info(portid_t port_id, struct rte_eth_fdir_info *fdir_info,
+		    struct rte_eth_fdir_stats *fdir_stat)
+{
+	int ret = -ENOTSUP;
+
+	if (ret == -ENOTSUP) {
+		ret = rte_pmd_i40e_get_fdir_info(port_id, fdir_info);
+		if (!ret)
+			ret = rte_pmd_i40e_get_fdir_stats(port_id, fdir_stat);
+	}
+	if (ret == -ENOTSUP) {
+		ret = rte_pmd_ixgbe_get_fdir_info(port_id, fdir_info);
+		if (!ret)
+			ret = rte_pmd_ixgbe_get_fdir_stats(port_id, fdir_stat);
+	}
+	switch (ret) {
+	case 0:
+		break;
+	case -ENOTSUP:
+		printf("\n FDIR is not supported on port %-2d\n",
+			port_id);
+		break;
+	default:
+		printf("programming error: (%s)\n", strerror(-ret));
+		break;
+	}
+	return ret;
+}
+int
+port_id_is_invalid(portid_t port_id, enum print_warning warning)
+{
+	uint16_t pid;
+
+	if (port_id == (portid_t)RTE_PORT_ALL)
+		return 0;
+
+	RTE_ETH_FOREACH_DEV(pid)
+		if (port_id == pid)
+			return 0;
+
+	if (warning == ENABLED_WARN)
+		printf("Invalid port %d\n", port_id);
+
+	return 1;
+}
 
 static inline void
 print_fdir_mask(struct rte_eth_fdir_masks *mask)
 {
-	printf("\n    vlan_tci: 0x%04x, ", mask->vlan_tci_mask);
-	printf("src_ipv4: 0x%08x, dst_ipv4: 0x%08x,"
-		" src_port: 0x%04x, dst_port: 0x%04x",
-		mask->ipv4_mask.src_ip, mask->ipv4_mask.dst_ip,
-		mask->src_port_mask, mask->dst_port_mask);
+	printf("\n    vlan_tci: 0x%04x", rte_be_to_cpu_16(mask->vlan_tci_mask));
 
-	printf("\n    src_ipv6: 0x%08x,0x%08x,0x%08x,0x%08x,"
-		" dst_ipv6: 0x%08x,0x%08x,0x%08x,0x%08x",
-		mask->ipv6_mask.src_ip[0], mask->ipv6_mask.src_ip[1],
-		mask->ipv6_mask.src_ip[2], mask->ipv6_mask.src_ip[3],
-		mask->ipv6_mask.dst_ip[0], mask->ipv6_mask.dst_ip[1],
-		mask->ipv6_mask.dst_ip[2], mask->ipv6_mask.dst_ip[3]);
+	printf(", src_ipv4: 0x%08x, dst_ipv4: 0x%08x",
+		rte_be_to_cpu_32(mask->ipv4_mask.src_ip),
+		rte_be_to_cpu_32(mask->ipv4_mask.dst_ip));
+
+	printf("\n    src_port: 0x%04x, dst_port: 0x%04x",
+		rte_be_to_cpu_16(mask->src_port_mask),
+		rte_be_to_cpu_16(mask->dst_port_mask));
+
+	printf("\n    src_ipv6: 0x%08x,0x%08x,0x%08x,0x%08x",
+		rte_be_to_cpu_32(mask->ipv6_mask.src_ip[0]),
+		rte_be_to_cpu_32(mask->ipv6_mask.src_ip[1]),
+		rte_be_to_cpu_32(mask->ipv6_mask.src_ip[2]),
+		rte_be_to_cpu_32(mask->ipv6_mask.src_ip[3]));
+
+	printf("\n    dst_ipv6: 0x%08x,0x%08x,0x%08x,0x%08x",
+		rte_be_to_cpu_32(mask->ipv6_mask.dst_ip[0]),
+		rte_be_to_cpu_32(mask->ipv6_mask.dst_ip[1]),
+		rte_be_to_cpu_32(mask->ipv6_mask.dst_ip[2]),
+		rte_be_to_cpu_32(mask->ipv6_mask.dst_ip[3]));
 
 	printf("\n");
 }
@@ -100,6 +166,7 @@ flowtype_to_str(uint16_t flow_type)
 		{"vxlan", RTE_ETH_FLOW_VXLAN},
 		{"geneve", RTE_ETH_FLOW_GENEVE},
 		{"nvgre", RTE_ETH_FLOW_NVGRE},
+		{"vxlan-gpe", RTE_ETH_FLOW_VXLAN_GPE},
 	};
 
 	for (i = 0; i < RTE_DIM(flowtype_str_table); i++) {
@@ -111,7 +178,8 @@ flowtype_to_str(uint16_t flow_type)
 }
 
 static inline void
-print_fdir_flow_type(uint32_t flow_types_mask) {
+print_fdir_flow_type(uint32_t flow_types_mask)
+{
 	int i;
 	char *p;
 
@@ -127,26 +195,22 @@ print_fdir_flow_type(uint32_t flow_types_mask) {
 	printf("\n");
 }
 
-void fdir_get_infos(uint32_t port_id) {
+void
+fdir_get_infos(portid_t port_id)
+{
 	struct rte_eth_fdir_stats fdir_stat;
 	struct rte_eth_fdir_info fdir_info;
-	int ret;
 
 	static const char *fdir_stats_border = "########################";
 
-	ret = rte_eth_dev_filter_supported(port_id, RTE_ETH_FILTER_FDIR);
-	if (ret < 0) {
-		printf("\n FDIR is not supported on port %-2d\n",
-			port_id);
+	if (port_id_is_invalid(port_id, ENABLED_WARN))
 		return;
-	}
 
 	memset(&fdir_info, 0, sizeof(fdir_info));
-	rte_eth_dev_filter_ctrl(port_id, RTE_ETH_FILTER_FDIR,
-			       RTE_ETH_FILTER_INFO, &fdir_info);
 	memset(&fdir_stat, 0, sizeof(fdir_stat));
-	rte_eth_dev_filter_ctrl(port_id, RTE_ETH_FILTER_FDIR,
-			       RTE_ETH_FILTER_STATS, &fdir_stat);
+	if (get_fdir_info(port_id, &fdir_info, &fdir_stat))
+		return;
+
 	printf("\n  %s FDIR infos for port %-2d     %s\n",
 	       fdir_stats_border, port_id, fdir_stats_border);
 	printf("  MODE: ");

@@ -72,7 +72,7 @@ function txSlave(queue)
 		bufs:offloadUdpChecksums()
 		-- send out all packets and frees old bufs that have been sent
 		queue:send(bufs)
-		print(tonumber(dpdkc.ice_tx_timestamps_read(1, 0)))
+		print(queue.dev:getTxTimestamp(queue, 0))
 
 		lm.sleepMillisIdle(1000)
 		print('sent packet')
