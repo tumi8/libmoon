@@ -270,6 +270,7 @@ int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error){
 	struct rte_flow_item pattern[5];
 	struct rte_flow_action action[2];
 	struct rte_flow_action_queue queue = { .index = queueID };
+
 	struct rte_flow_item_eth eth_spec;
 	struct rte_flow_item_eth eth_mask;
 	struct rte_flow_item_ipv4 ipv4_mask;
@@ -280,11 +281,11 @@ int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error){
 	struct rte_flow_item_raw raw_mask;
 
 	uint8_t pattern_string[2];
-	pattern_string[0] = 0x04;
-	pattern_string[1] = 0x00;
+	pattern_string[0] = 0x00;
+	pattern_string[1] = 0x02;
 	uint8_t mask_string[2]; 
 	mask_string[0] = 0xFF;
-	mask_string[1] = 0xFE;
+	mask_string[1] = 0xFF;
 
 	memset(pattern, 0, sizeof(pattern));
 	memset(action, 0, sizeof(action));
@@ -304,16 +305,20 @@ int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error){
 	memset(&raw_spec, 0, sizeof(struct rte_flow_item_raw));
 	memset(&raw_mask, 0, sizeof(struct rte_flow_item_raw));
 
-	ipv4_spec.hdr.src_addr = 0x00000000;
-	ipv4_spec.hdr.dst_addr = 0x00000000;
+	//ipv4_spec.hdr.src_addr = 0x0a00000a;
+	//ipv4_spec.hdr.dst_addr = 0x0a00010a;
+	//ipv4_mask.hdr.src_addr = 0xFFFFFFFF;
+	//ipv4_mask.hdr.dst_addr = 0xFFFFFFFF;
 
-	ipv4_mask.hdr.src_addr = 0xFFFFFFFF;
-	ipv4_mask.hdr.dst_addr = 0xFFFFFFFF;
+	udp_spec.hdr.src_port = htons(1024);
+	udp_spec.hdr.dst_port = htons(1234);
+	udp_mask.hdr.src_port = 0xFFFF;
+	udp_mask.hdr.dst_port = 0xFFFF;
 
-	raw_spec.relative = 1;
+	raw_spec.relative = 0;
 	raw_spec.search = 0;
 	raw_spec.reserved = 0;
-	raw_spec.offset = 0;
+	raw_spec.offset = 42;
 	raw_spec.limit = 0;
 	raw_spec.length = 2;
 	raw_spec.pattern = pattern_string;
@@ -331,10 +336,10 @@ int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error){
 	//pattern[0].spec = &eth_spec;
 	pattern[1].type = RTE_FLOW_ITEM_TYPE_IPV4;
 	pattern[1].mask = &ipv4_mask;
-	pattern[1].spec = &ipv4_spec;
+	//pattern[1].spec = &ipv4_spec;
 	pattern[2].type = RTE_FLOW_ITEM_TYPE_UDP;
-	//pattern[2].mask = &udp_mask;
-	//pattern[2].spec = &udp_spec;
+	pattern[2].mask = &udp_mask;
+	pattern[2].spec = &udp_spec;
 	pattern[3].type = RTE_FLOW_ITEM_TYPE_RAW;
 	pattern[3].spec = &raw_spec;
 	pattern[3].mask = &raw_mask;
