@@ -34,6 +34,9 @@ local TSYNCRXCTL_TSIP_UP_EN_OFFS = 24
 local ETQS_RX_QUEUE_OFFS   = 16
 local ETQS_QUEUE_ENABLE    = bit.lshift(1, 31)
 
+dev.driverInfo = {
+	disableOffloads = true
+}
 
 dev.supportsFdir  = true
 dev.timeRegisters = {SYSTIMEL, SYSTIMEH, TIMEADJL, TIMEADJH}

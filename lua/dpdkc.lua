@@ -422,6 +422,8 @@ ffi.cdef[[
 	uint64_t ice_tx_timestamps_read_raw(int port, int slot);
 	uint64_t ice_read_current_timer(int port);
 
+	int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error);
+
 	// statistics
 	void rte_eth_stats_get(uint8_t port, struct rte_eth_stats* stats);
 ]]

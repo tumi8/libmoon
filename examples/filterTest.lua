@@ -22,26 +22,38 @@ function master(args)
 		args.dev[i] = device.config{
 			port = dev,
 			txQueues = 1,
-			rxQueues = 1,
+			rxQueues = 2,
 			--rssQueues = args.threads
 		}
 	end
 	device.waitForLinks()
 
 	-- start forwarding tasks
-	lm.startTask("txSlave", args.dev[1]:getTxQueue(0))
+	--lm.startTask("txSlaveEthPTP", args.dev[1]:getTxQueue(0))
+
+	--filter = {
+	--	protocol = 0x11
+	--}
+	--args.dev[2]:fiveTupleFilter(filter, 1)
+	args.dev[2]:filterUdpTimestamps(1)
+	args.dev[2]:dumpFilters()
+
+	lm.startTask("txSlavePTP", args.dev[1]:getTxQueue(0))
+	
 	lm.startTask("rxSlave", args.dev[2]:getRxQueue(0))
+	lm.startTask("rxSlave", args.dev[2]:getRxQueue(1))
 	lm.waitForTasks()
 end
 
 function rxSlave(rxQueue)
+	--rxQueue.dev:dumpFilters()
 	-- a bufArray is just a list of buffers that we will use for batched forwarding
 	local bufs = memory.bufArray()
 	while lm.running() do -- check if Ctrl+c was pressed
 		-- receive one or more packets from the queue
 		local count = rxQueue:recv(bufs)
 		for i = 1, count do
-            print("received packet:")
+            print("received packet on queue: "..tostring(rxQueue.qid))
             bufs[i]:dump()
 		end
 	end
@@ -66,10 +78,38 @@ local packetFunctions = {
 
 	(function (packet) 
 		packet.ip4:setDstString("192.168.178.1")
+	end),
+
+	(function (packet) 
+		packet.eth:setType(0x0806)
 	end)
 }
 
-function txSlave(queue)
+function txSlaveEthPTP(queue)
+	-- memory pool with default values for all packets, this is our archetype
+	local mempool = memory.createMemPool(function(buf)
+		buf:getPtpPacket():fill{
+		}
+	end)
+
+	-- a bufArray is just a list of buffers from a mempool that is processed as a single batch
+	local bufs = mempool:bufArray(1)
+
+	for i=1,#packetFunctions do
+		if not lm.running() then break end
+
+		-- this actually allocates some buffers from the mempool the array is associated with
+		-- this has to be repeated for each send because sending is asynchronous, we cannot reuse the old buffers here
+		bufs:alloc(PKT_LEN)
+		-- packet framework allows simple access to fields in complex protocol stacks
+		-- send out all packets and frees old bufs that have been sent
+		queue:send(bufs)
+		print('sent packet')
+        lm.sleepMillisIdle(1000)
+	end
+end
+
+function txSlavePTP(queue)
 	-- memory pool with default values for all packets, this is our archetype
 	local mempool = memory.createMemPool(function(buf)
 		buf:getUdpPtpPacket():fill{
@@ -98,11 +138,10 @@ function txSlave(queue)
 		packetFunctions[i](pkt)
 		-- UDP checksums are optional, so using just IPv4 checksums would be sufficient here
 		-- UDP checksum offloading is comparatively slow: NICs typically do not support calculating the pseudo-header checksum so this is done in SW
-		bufs:offloadUdpChecksums()
+		-- bufs:offloadUdpChecksums()
 		-- send out all packets and frees old bufs that have been sent
 		queue:send(bufs)
 		print('sent packet')
         lm.sleepMillisIdle(1000)
 	end
 end
-
