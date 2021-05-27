@@ -283,7 +283,7 @@ int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error){
 	uint8_t pattern_string[2];
 	pattern_string[0] = 0x00;
 	pattern_string[1] = 0x02;
-	uint8_t mask_string[2]; 
+	uint8_t mask_string[2];
 	mask_string[0] = 0xFF;
 	mask_string[1] = 0xFF;
 
@@ -310,15 +310,15 @@ int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error){
 	//ipv4_mask.hdr.src_addr = 0xFFFFFFFF;
 	//ipv4_mask.hdr.dst_addr = 0xFFFFFFFF;
 
-	udp_spec.hdr.src_port = htons(1024);
-	udp_spec.hdr.dst_port = htons(1234);
-	udp_mask.hdr.src_port = 0xFFFF;
-	udp_mask.hdr.dst_port = 0xFFFF;
+	//udp_spec.hdr.src_port = htons(1024);
+	//udp_spec.hdr.dst_port = htons(1234);
+	//udp_mask.hdr.src_port = 0xFFFF;
+	//udp_mask.hdr.dst_port = 0xFFFF;
 
-	raw_spec.relative = 0;
+	raw_spec.relative = 1;
 	raw_spec.search = 0;
 	raw_spec.reserved = 0;
-	raw_spec.offset = 42;
+	raw_spec.offset = 0;
 	raw_spec.limit = 0;
 	raw_spec.length = 2;
 	raw_spec.pattern = pattern_string;
@@ -332,14 +332,14 @@ int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error){
 	raw_mask.pattern = mask_string;
 
 	pattern[0].type = RTE_FLOW_ITEM_TYPE_ETH;
-	//pattern[0].mask = &eth_mask;
-	//pattern[0].spec = &eth_spec;
+//	pattern[0].mask = &eth_mask;
+//	pattern[0].spec = &eth_spec;
 	pattern[1].type = RTE_FLOW_ITEM_TYPE_IPV4;
-	pattern[1].mask = &ipv4_mask;
-	//pattern[1].spec = &ipv4_spec;
+//	pattern[1].mask = &ipv4_mask;
+//	pattern[1].spec = &ipv4_spec;
 	pattern[2].type = RTE_FLOW_ITEM_TYPE_UDP;
-	pattern[2].mask = &udp_mask;
-	pattern[2].spec = &udp_spec;
+//	pattern[2].mask = &udp_mask;
+//	pattern[2].spec = &udp_spec;
 	pattern[3].type = RTE_FLOW_ITEM_TYPE_RAW;
 	pattern[3].spec = &raw_spec;
 	pattern[3].mask = &raw_mask;

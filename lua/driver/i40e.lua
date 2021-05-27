@@ -206,8 +206,8 @@ local function getFdirFilter(queue, ptpType, ver, udpFilter)
 end
 
 -- we actually configure the filter in reconfigureUdpTimestampFilter below
-function dev:filterUdpTimestamps(queue, ptpType, ver, udpFilter)
-end
+--function dev:filterUdpTimestamps(queue, ptpType, ver, udpFilter)
+--end
 
 --- Updates the flow director filter. The i40e implementation doesn't seem
 --- to allow matching UDP payload without matching IPs and ports...
