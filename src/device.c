@@ -143,8 +143,12 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		.link_speeds = ETH_LINK_SPEED_AUTONEG,
 	  	.rx_adv_conf = {
 			.rss_conf = rss_conf,
-		}
+		} 
 	};
+	if(!cfg->enable_rss){
+		memset(&port_conf.rx_adv_conf, 0, sizeof(port_conf.rx_adv_conf));
+	}
+
 	int rc = rte_eth_dev_configure(cfg->port, cfg->rx_queues, cfg->tx_queues, &port_conf);
 	if (rc) return rc;
 	struct rte_eth_txconf tx_conf = {

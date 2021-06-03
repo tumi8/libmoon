@@ -2708,19 +2708,13 @@ function dev:l2Filter(etype, queue)
 	local flow_attr = ffi.new("struct rte_flow_attr", { group = 0, priority = 0, ingress = 1, egress = 0, transfer = 0, reserved = 0 })
 
 	-- set the flow items (filters)
-	local ether_addr = ffi.new("struct ether_addr", { addr_bytes = "\x00\x00\x00\x00\x00\x00" })
-
 	local filters = ffi.new("struct rte_flow_item[2]", {
 		ffi.new("struct rte_flow_item", {
 			type = C.RTE_FLOW_ITEM_TYPE_ETH,
 			spec = ffi.new("struct rte_flow_item_eth", {
-				dst = ether_addr,
-				src = ether_addr,
 				type = hton16(etype)
 			}),
 			mask = ffi.new("struct rte_flow_item_eth", {
-				dst = ether_addr,
-				src = ether_addr,
 				type = 0xFFFF
 			})
 		}),
@@ -2740,7 +2734,7 @@ function dev:l2Filter(etype, queue)
 	return createFilter(self, flow_attr, filters, actions)	
 end
 
-function dev:fiveTupleFilter(filter, queue)
+function dev:udpFilter(filter, queue)
 	if type(queue) == "table" then
 		if queue.dev.id ~= self.id then
 			log:fatal("Queue must belong to the device being configured")
@@ -2749,7 +2743,7 @@ function dev:fiveTupleFilter(filter, queue)
 	end
 	
 	-- set attributes
-	local flow_attr = ffi.new("struct rte_flow_attr", { group = 0, priority = 1, ingress = 1, egress = 0, transfer = 0, reserved = 0 })
+	local flow_attr = ffi.new("struct rte_flow_attr", { group = 0, priority = 0, ingress = 1, egress = 0, transfer = 0, reserved = 0 })
 	
 	-- set the flow items (filters)	
 	local filters = ffi.new("struct rte_flow_item[4]", {
@@ -2760,28 +2754,12 @@ function dev:fiveTupleFilter(filter, queue)
 			type = C.RTE_FLOW_ITEM_TYPE_IPV4,
 			spec = ffi.new("struct rte_flow_item_ipv4", {
 				hdr = {
-					version_ihl = 0x00,
-					type_of_service = 0x00,
-					total_length = 0x0000,
-					packet_id = 0x0000,
-					fragment_offset = 0x0000,
-					time_to_live = 0x00,
-					next_proto_id = filter.protocol or 0x00,
-					hdr_checksum = 0x0000,
 					src_addr = (filter.src_addr ~= nil) and bswap(parseIPAddress(filter.src_addr)) or 0x00000000,
 					dst_addr = (filter.dst_addr ~= nil) and bswap(parseIPAddress(filter.dst_addr)) or 0x00000000
 				}
 			}),
 			mask = ffi.new("struct rte_flow_item_ipv4", {
 				hdr = {
-					version_ihl = 0x00,
-					type_of_service = 0x00,
-					total_length = 0x0000,
-					packet_id = 0x0000,
-					fragment_offset = 0x0000,
-					time_to_live = 0x00,
-					next_proto_id = (filter.protocol ~= nil) and 0xFF or 0x00,
-					hdr_checksum = 0x0000,
 					src_addr = (filter.src_addr ~= nil) and 0xFFFFFFFF or 0x00000000,
 					dst_addr = (filter.dst_addr ~= nil) and 0xFFFFFFFF or 0x00000000
 				}
@@ -2793,16 +2771,12 @@ function dev:fiveTupleFilter(filter, queue)
 				hdr = {
 					src_port = filter.src_port and hton16(filter.src_port) or 0x0000,
 					dst_port = filter.dst_port and hton16(filter.dst_port) or 0x0000,
-					dgram_len = 0x0000,
-					dgram_cksum = 0x0000
 				}
 			}),
 			mask = ffi.new("struct rte_flow_item_udp", {
 				hdr = {
 					src_port = (filter.src_port ~= nil) and 0xFFFF or 0x0000,
 					dst_port = (filter.dst_port ~= nil) and 0xFFFF or 0x0000,
-					dgram_len = 0x0000,
-					dgram_cksum = 0x0000
 				}
 			})
 		}),
@@ -2830,87 +2804,13 @@ function dev:filterUdpTimestamps(queue, ptpType, ver)
 		queue = queue.qid
 	end
 
-	local flow_error = ffi.new("struct rte_flow_error")
-	print(queue)
-	local ok = dpdkc.filterUdpTimestamps(self.id, queue, flow_error)
-	if ok == 0 then
-		log:warn("creation of udp timestamp filter failed. Exit code: " .. ok .. ". Root cause: " .. flowError[tonumber(flow_error.type)])
-		if flow_error.message ~= nil then
-			log:warn("Error message:")
-			log:warn("\t" .. ffi.string(flow_error.message))
-		end
-		return nil
-	end
-end
-
---- Prints all fdir filter informations for debugging purposes.
-function dev:dumpFilters()
-	C.fdir_get_infos(self.id)
-end
-
-function tmp()
-	if type(queue) == "table" then
-		if queue.dev.id ~= self.id then
-			log:fatal("Queue must belong to the device being configured")
-		end
-		queue = queue.qid
-	end
-
 	ptpType = ptpType or 0
 	ver = ver or 2
 
 	-- set attributes
 	local flow_attr = ffi.new("struct rte_flow_attr", { group = 0, priority = 0, ingress = 1, egress = 0, transfer = 0, reserved = 0 })
 
-	-- set the flow items (filters)
-	local pattern = ffi.new("uint8_t[2]")
-	local mask = ffi.new("uint8_t[2]")
-	pattern[1] = ptpType
-	pattern[2] = ver
-	mask[1] = 0xFF
-	mask[2] = 0xFF
-
-	udpMask = ffi.new("struct rte_flow_item_udp", {hdr={
-		src_port = 0,
-		dst_port = 0,
-		dgram_len = 0,
-		dgram_cksum = 0
-	}})
-
-	local filters = ffi.new("struct rte_flow_item[5]", {
-		ffi.new("struct rte_flow_item", {
-			type = C.RTE_FLOW_ITEM_TYPE_ETH,
-		}),
-		ffi.new("struct rte_flow_item", {
-			type = C.RTE_FLOW_ITEM_TYPE_IPV4,		
-		}),
-		ffi.new("struct rte_flow_item", {
-			type = C.RTE_FLOW_ITEM_TYPE_UDP,
-			mask = udpMask,
-		}),
-		ffi.new("struct rte_flow_item", {
-			type = C.RTE_FLOW_ITEM_TYPE_RAW,
-			spec = ffi.new("struct rte_flow_item_raw", {
-				relative = 0,
-				search = 0,
-				reserved = 0,
-				offset = 0,
-				limit = 0,
-				length = 2,
-				pattern = pattern
-			}),
-			mask = ffi.new("struct rte_flow_item_raw", {
-				relative = 1,
-				search = 1,
-				reserved = 0,
-				offset = 0xffffffff,
-				limit = 0xffff,
-				length = 0xffff,
-				pattern = mask
-			})
-		}),
-		ffi.new("struct rte_flow_item", { type = C.RTE_FLOW_ITEM_TYPE_END })
-	})
+	local filters = self:getUdpTimestampFilter(ptpType, ver)
 
 	-- set actions
 	local actions = ffi.new("struct rte_flow_action[2]", {
@@ -2922,8 +2822,14 @@ function tmp()
 		ffi.new("struct rte_flow_action", { type = C.RTE_FLOW_ACTION_TYPE_END })
 	})
 
-	return createFilter(self, flow_attr, filters, actions)	
+	return createFilter(self, flow_attr, filters, actions)
 end
+
+--- Prints all fdir filter informations for debugging purposes.
+function dev:dumpFilters()
+	C.fdir_get_infos(self.id)
+end
+
 --- Generic filter which can filter packets by their ethertype
 --- This filter can be easily changed to also match based on IP addresses
 --- Caution: This uses the relativly new filter API, it might be unsupported on some devices

@@ -171,83 +171,50 @@ function dev:hasRxTimestamp()
 	return bit.band(stats, PRTTSYN_STAT_1_RXT_ALL) ~= 0 and -1 or nil
 end
 
-local function getFdirFilter(queue, ptpType, ver, udpFilter)
-	if type(queue) == "table" then
-		queue = queue.qid
-	end
-	ptpType = ptpType or 0
-	ver = ver or 2
-	udpFilter = udpFilter or {}
-	return ffi.new("struct rte_eth_fdir_filter", {
-		soft_id = 1,
-		input = {
-			flow_type = require"filter".RTE_ETH_FLOW_NONFRAG_IPV4_UDP,
-			flow = {
-				udp4_flow = {
-					ip = {
-						src_ip = udpFilter.srcIp or 0,
-						dst_ip = udpFilter.dstIp or 0
-					},
-					src_port = udpFilter.srcPort or 0,
-					dst_port = udpFilter.dstPort or 0
-				}
-			},
-			flow_ext = {
-				vlan_tci = 0,
-				flexbytes = {ptpType, ver},
-				is_vf = 0,
-				dst_id = 0,
-			},
-		},
-		action = {
-			rx_queue = queue
-		},
+function dev:getUdpTimestampFilter(ptpType, ver)
+	-- set the flow items (filters)
+	local rawPattern = ffi.new("uint8_t[2]")
+	local rawMask = ffi.new("uint8_t[2]")
+	rawPattern[0] = ptpType
+	rawPattern[1] = ver
+	rawMask[0] = 0xFF
+	rawMask[1] = 0xFF
+
+	local filters = ffi.new("struct rte_flow_item[5]", {
+		ffi.new("struct rte_flow_item", {
+			type = ffi.C.RTE_FLOW_ITEM_TYPE_ETH,
+		}),
+		ffi.new("struct rte_flow_item", {
+			type = ffi.C.RTE_FLOW_ITEM_TYPE_IPV4,
+		}),
+		ffi.new("struct rte_flow_item", {
+			type = ffi.C.RTE_FLOW_ITEM_TYPE_UDP,
+		}),
+		ffi.new("struct rte_flow_item", {
+			type = ffi.C.RTE_FLOW_ITEM_TYPE_RAW,
+			spec = ffi.new("struct rte_flow_item_raw", {
+				relative = 1,
+				search = 0,
+				reserved = 0,
+				offset = 0,
+				limit = 0,
+				length = 2,
+				pattern = rawPattern
+			}),
+			mask = ffi.new("struct rte_flow_item_raw", {
+				relative = 1,
+				search = 1,
+				reserved = 0,
+				offset = ffi.cast("uint32_t", 4294967295), -- = 0xFFFFFFFF as unsigned int
+				limit = 0xffff,
+				length = 0xffff,
+				pattern = rawMask
+			})
+		}),
+		ffi.new("struct rte_flow_item", { type = ffi.C.RTE_FLOW_ITEM_TYPE_END })
 	})
-end
 
--- we actually configure the filter in reconfigureUdpTimestampFilter below
---function dev:filterUdpTimestamps(queue, ptpType, ver, udpFilter)
---end
-
---- Updates the flow director filter. The i40e implementation doesn't seem
---- to allow matching UDP payload without matching IPs and ports...
---- This is somewhat annoying.
---- This function is called by the timestamper with the packet to send.
----
---- If you have a setup where the timestamped packet is modified, e.g.,
---- measuring the latency of a NAT device:
---- Use the packet modification callback and call this function explicitly
---- from the callback. Then return true from the callback to prevent the
---- timestamper from calling this.
-function dev:reconfigureUdpTimestampFilter(queue, pkt)
-	require "filter"
-	local ptpType = 0
-	local ver = 2
-	local flowTuple = {srcIp = pkt.ip4.src.uint32, dstIp = pkt.ip4.dst.uint32, srcPort = pkt.udp.src, dstPort = pkt.udp.dst}
-	-- no, i40e doesn't implement RTE_ETH_FILTER_UPDATE
-	-- deleting and re-adding the filter is quite slow (about 25ms)
-	-- this limits the number of timestamped packets per second to about 40/s
-	-- however, this is only necessary when using multiple flows of timestamped packets
-	-- so avoid multiple flows because i40e is broken...?
-	if not self.currentTimestampFilterFlow
-	   or self.currentTimestampFilterFlow.srcIp ~= flowTuple.srcIp
-	   or self.currentTimestampFilterFlow.dstIp ~= flowTuple.dstIp
-	   or self.currentTimestampFilterFlow.srcPort ~= flowTuple.srcPort
-	   or self.currentTimestampFilterFlow.dstPort ~= flowTuple.dstPort then
-		-- flow changed since last time
-		local removeSuccess = true
-		if self.currentTimestampFilter then
-			local err = dpdkc.rte_eth_dev_filter_ctrl(self.id, dpdkc.RTE_ETH_FILTER_FDIR, dpdkc.RTE_ETH_FILTER_DELETE, self.currentTimestampFilter)
-			removeSuccess = checkDpdkError(err, "deleting fdir filter")
-		end
-		if removeSuccess then
-			local filter = getFdirFilter(queue, ptpType, ver, flowTuple)
-			local err = dpdkc.rte_eth_dev_filter_ctrl(self.id, dpdkc.RTE_ETH_FILTER_FDIR, dpdkc.RTE_ETH_FILTER_ADD, filter)
-			checkDpdkError(err, "setting fdir filter")
-			self.currentTimestampFilter = filter
-			self.currentTimestampFilterFlow = flowTuple
-		end
-	end
+	return filters
 end
 
 return dev

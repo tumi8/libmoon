@@ -125,5 +125,63 @@ end
 
 dev.embeddedTimestampAtEndOfBuffer = true
 
+function dev:getUdpTimestampFilter(ptpType, ver)
+	-- set the flow items (filters)
+	local rawPattern = ffi.new("uint8_t[2]")
+	local rawMask = ffi.new("uint8_t[2]")
+	rawPattern[0] = ptpType
+	rawPattern[1] = ver
+	rawMask[0] = 0xFF
+	rawMask[1] = 0xFF
+
+	local filters = ffi.new("struct rte_flow_item[5]", {
+		ffi.new("struct rte_flow_item", {
+			type = ffi.C.RTE_FLOW_ITEM_TYPE_ETH,
+		}),
+		ffi.new("struct rte_flow_item", {
+			type = ffi.C.RTE_FLOW_ITEM_TYPE_IPV4,
+			spec = ffi.new("struct rte_flow_item_ipv4", {
+				hdr = {}
+			}),
+			mask = ffi.new("struct rte_flow_item_ipv4", {
+				hdr = {}
+			})
+		}),
+		ffi.new("struct rte_flow_item", {
+			type = ffi.C.RTE_FLOW_ITEM_TYPE_UDP,
+			spec = ffi.new("struct rte_flow_item_udp", {
+				hdr = {}
+			}),
+			mask = ffi.new("struct rte_flow_item_udp", {
+				hdr = {}
+			})
+		}),
+		ffi.new("struct rte_flow_item", {
+			type = ffi.C.RTE_FLOW_ITEM_TYPE_RAW,
+			spec = ffi.new("struct rte_flow_item_raw", {
+				relative = 0,
+				search = 0,
+				reserved = 0,
+				offset = 42,
+				limit = 0,
+				length = 2,
+				pattern = rawPattern
+			}),
+			mask = ffi.new("struct rte_flow_item_raw", {
+				relative = 1,
+				search = 1,
+				reserved = 0,
+				offset = ffi.cast("uint32_t", 4294967295), -- = 0xFFFFFFFF as unsigned int
+				limit = 0xffff,
+				length = 0xffff,
+				pattern = rawMask
+			})
+		}),
+		ffi.new("struct rte_flow_item", { type = ffi.C.RTE_FLOW_ITEM_TYPE_END })
+	})
+
+	return filters
+end
+
 return dev
 
