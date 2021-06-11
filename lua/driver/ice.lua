@@ -4,18 +4,53 @@ local dev = {}
 local dpdkc = require "dpdkc"
 local ffi   = require "ffi"
 local log   = require "log"
+local eth   = require "proto.ethernet"
+
+dev.supportsFdir  				= true
+dev.useTimsyncIds 				= false
+dev.embeddedTimestampInPacket	= true
+
+ffi.cdef[[
+int libmoon_ice_reset_timecounters(uint32_t port_id);
+]]
+
+function dev:filterL2Timestamps(queue)
+	local qid = type(queue) == "number" and queue or queue.qid
+	if qid == 0 then
+		self:flushFilter()
+	else
+		self:l2Filter(eth.TYPE_PTP, queue)
+	end
+end
 
 function dev:enableRxTimestampsAllPackets()
 	dpdkc.ice_init_timer(self.id)
 end
 
-function dev:enableTxTimestamps(queue)
+function dev:enableRxTimestamps(queue, udpPort)
+	ffi.C.libmoon_ice_reset_timecounters(self.id)
 	dpdkc.ice_init_timer(self.id)
 
+	if udpPort ~= nil then
+		self:udpFilter({dst_port = udpPort}, queue.qid)
+	end
+end
+
+function dev:enableTxTimestamps(queue)
 	self.tx_prev_ts = ffi.new("uint64_t[1]")
 	self.tx_prev_ts[0] = 0
 	self.tx_wraparound_ctr = ffi.new("uint64_t[1]")
 	self.tx_wraparound_ctr[0] = 0
+
+	dpdkc.ice_init_timer(self.id)
+end
+
+function dev:resetTimeCounters() 
+	if(self.tx_prev_ts) then
+		self.tx_prev_ts[0] = 0
+		self.tx_wraparound_ctr[0] = 0
+	end
+	ffi.C.libmoon_ice_reset_timecounters(self.id)
 end
 
 
@@ -30,7 +65,7 @@ end
 -- yes, this card supports timestamping
 -- (TODO might want to implement something here)
 dev.timeRegisters = {0, 0, 0, 0}
-function dev:enableRxTimestamps(self, udpPort) end
+
 function dev:hasRxTimestamp() return 1 end
 
 function dev:getUdpTimestampFilter(ptpType, ver)

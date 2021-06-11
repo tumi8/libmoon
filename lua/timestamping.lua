@@ -24,10 +24,14 @@ function mod:newTimestamper(txQueue, rxQueue, mem, udp, doNotConfigureUdpPort)
 		if udp then
 			buf:getUdpPtpPacket():fill{
 				ethSrc = txQueue,
+				-- filters do not work on e810 when using multicast mac dst addresses 
+				ethDst = "22:33:44:55:66:77"
 			}
 		else
 			buf:getPtpPacket():fill{
 				ethSrc = txQueue,
+				-- filters do not work on e810 when using multicast mac dst addresses
+				ethDst = "22:33:44:55:66:77"
 			}
 		end
 	end)
@@ -37,6 +41,9 @@ function mod:newTimestamper(txQueue, rxQueue, mem, udp, doNotConfigureUdpPort)
 		rxQueue:filterUdpTimestamps()
 	elseif not udp then
 		rxQueue:filterL2Timestamps()
+	end
+	if doNotConfigureUdpPort == nil then
+		doNotConfigureUdpPort = true
 	end
 	return setmetatable({
 		mem = mem,
@@ -70,6 +77,7 @@ function timestamper:measureLatency(pktSize, packetModifier, maxWait)
 	maxWait = (maxWait or 15) / 1000
 	self.txBufs:alloc(pktSize)
 	local buf = self.txBufs[1]
+	buf:setTxTimestampIndex(0)
 	buf:enableTimestamps()
 	local expectedSeq = self.seq
 	self.seq = (self.seq + 1) % 2^16
@@ -89,13 +97,6 @@ function timestamper:measureLatency(pktSize, packetModifier, maxWait)
 		end
 		buf:getUdpPtpPacket():setLength(pktSize)
 		self.txBufs:offloadUdpChecksums()
-		if self.rxQueue.dev.reconfigureUdpTimestampFilter and not skipReconfigure then
-			-- i40e driver fdir filters are broken
-			-- it is not possible to match on flex bytes in udp packets without matching IPs and ports as well
-			-- so we have to look at that packet and reconfigure the filters
-			-- TODO: this might be fixed by now
-			self.rxQueue.dev:reconfigureUdpTimestampFilter(self.rxQueue, buf:getUdpPacket())
-		end
 	end
 	mod.syncClocks(self.txDev, self.rxDev)
 	-- clear any "leftover" timestamps
@@ -119,13 +120,20 @@ function timestamper:measureLatency(pktSize, packetModifier, maxWait)
 					local buf = self.rxBufs[i]
 					local timesync = self.useTimesync and buf:getTimesync() or 0
 					local seq = (self.udp and buf:getUdpPtpPacket() or buf:getPtpPacket()).ptp:getSequenceID()
-					if buf:hasTimestamp() and seq == expectedSeq and (seq == timestampedPkt or timestampedPkt == -1) then
+					if buf:hasTimestamp() and seq == expectedSeq and ((seq == timestampedPkt or timestampedPkt == -1) or (self.rxDev.embeddedTimestampInPacket)) then
 						-- yay!
-						local rxTs = self.rxQueue:getTimestamp(nil, timesync) 
-						if not rxTs then
-							-- can happen if you hotplug cables
-							return nil, numPkts
+
+						local rxTs
+						if self.rxDev.embeddedTimestampInPacket then
+							rxTs = buf:getTimestamp()
+						else
+							rxTs = self.rxQueue:getTimestamp(nil, timesync) 
+							if not rxTs then
+								-- can happen if you hotplug cables
+								return nil, numPkts
+							end
 						end
+
 						self.rxBufs:freeAll()
 						local lat = rxTs - tx
 						if lat > 0 and lat < 2 * maxWait * 10^9 then

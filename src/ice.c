@@ -113,6 +113,12 @@ static int ice_phy_quad_reg_read_ext(struct ice_hw *hw, struct ice_pf *pf, u32 a
 #define HIGH_TX_MEMORY_BANK_START	0x03090004
 
 // XXX end of copied (and modified) ice driver code
+int libmoon_ice_reset_timecounters(uint32_t port_id) {
+	struct ice_pf* pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port_id].data->dev_private);
+	pf->wraparound_ctr = 0;
+	pf->prev_ts = 0;
+	return 0;
+}
 
 // adapted from "ice_ptp_tx_hwtstamp_ext" from ice driver
 uint64_t ice_tx_timestamps_read_register(int port, int slot){

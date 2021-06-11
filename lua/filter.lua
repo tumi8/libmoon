@@ -2657,6 +2657,22 @@ local flowError = {
         [C.RTE_FLOW_ERROR_TYPE_ACTION] = "Specific action"
 }
 
+function dev:flushFilter()
+	-- error struct
+	local flow_error = ffi.new("struct rte_flow_error")
+
+	-- remove old filters from port
+	local ok = C.rte_flow_flush(self.id, flow_error)
+	if ok ~= 0 then
+		log:warn("removing of old filters failed. Exit code: " .. ok .. ". Root cause: " .. flowError[tonumber(flow_error.type)])
+		if flow_error.message ~= nil then
+			log:warn("Error message:")
+			log:warn("\t" .. ffi.string(flow_error.message))
+		end
+		return nil
+	end
+end
+
 function createFilter(dev, flow_attr, filters, actions)
 	-- error struct
 	local flow_error = ffi.new("struct rte_flow_error")

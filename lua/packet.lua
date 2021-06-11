@@ -166,9 +166,8 @@ end
 ---- Timestamp generation flag
 -------------------------------------------------------------------------------------------
 
-function pkt:enableIceTxTimestamp(index)
+function pkt:setTxTimestampIndex(index)
 	if index>=0 and index<=64 then
-		self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IEEE1588_TMST)
 		self.timesync = index;
 	else
 		log:fatal("Invalid timestamp index")
