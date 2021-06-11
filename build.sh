@@ -45,7 +45,7 @@ done
 # TODO: this should probably be a makefile
 (
 cd $(dirname "${BASH_SOURCE[0]}")
-git -c submodule."deps/dpdk".update=none submodule update --init --recursive
+git submodule update --init --recursive
 
 NUM_CPUS=$(cat /proc/cpuinfo  | grep "processor\\s: " | wc -l)
 
@@ -97,8 +97,8 @@ PKG_CONFIG_PATH=$PKG_CONFIG_PATH cmake ${OPTIONS}..
 PKG_CONFIG_PATH=$PKG_CONFIG_PATH make -j $NUM_CPUS
 )
 
-echo Trying to bind interfaces, this will fail if you are not root
-echo Try "sudo ./bind-interfaces.sh" if this step fails
-./bind-interfaces.sh ${FLAGS}
+#echo Trying to bind interfaces, this will fail if you are not root
+#echo Try "sudo ./bind-interfaces.sh" if this step fails
+#./bind-interfaces.sh ${FLAGS}
 )
 
