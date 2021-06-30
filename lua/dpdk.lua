@@ -218,6 +218,7 @@ function mod.init()
 			argv[#argv + 1] = v
 		end
 	end
+	argv[#argv + 1] = "--force-max-simd-bitwidth=64"
 	local argc = #argv
 	dpdkc.rte_eal_init(argc, ffi.new("const char*[?]", argc, argv))
 	local device = require "device"

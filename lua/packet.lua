@@ -70,8 +70,8 @@ function pkt:getTimestamp(dev)
 			low = timestamp[0]
 			high = timestamp[1]
 			return high * 10^9 + low
-		elseif bit.bor(self.ol_flags, dpdk.PKT_RX_TIMESTAMP) ~= 0 then
-			-- ice-style NICs that set the PKT_RX_TIMESTAMP flag and use the timestamp dynfield
+		elseif dev and dev.embeddedTimestampInPacket then
+			-- ice-style NICs use the timestamp dynfield
 			return tonumber(dpdkc.get_timestamp_dynfield(ffi.cast('struct rte_mbuf*', self)))
 		else
 			-- TODO: this is only tested with the Intel 82580 NIC at the moment

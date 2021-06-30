@@ -15,6 +15,7 @@ SET(FILES
 	src/device
 	src/i40e
 	src/ice
+	src/iavf
 	src/util
 	src/lifecycle
 	src/barrier
@@ -67,6 +68,7 @@ INCLUDE_DIRECTORIES(
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ixgbe
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/i40e/base
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/i40e
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/common/iavf
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/iavf
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ice/base
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ice
