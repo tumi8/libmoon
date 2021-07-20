@@ -77,7 +77,6 @@ function timestamper:measureLatency(pktSize, packetModifier, maxWait)
 	maxWait = (maxWait or 15) / 1000
 	self.txBufs:alloc(pktSize)
 	local buf = self.txBufs[1]
-	buf:setTxTimestampIndex(0)
 	buf:enableTimestamps()
 	local expectedSeq = self.seq
 	self.seq = (self.seq + 1) % 2^16

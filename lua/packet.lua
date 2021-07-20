@@ -162,18 +162,6 @@ function pkt:removeLast(bytes)
 	dpdkc.rte_pktmbuf_trim_export(self, bytes)
 end
 
--------------------------------------------------------------------------------------------
----- Timestamp generation flag
--------------------------------------------------------------------------------------------
-
-function pkt:setTxTimestampIndex(index)
-	if index>=0 and index<=64 then
-		self.timesync = index;
-	else
-		log:fatal("Invalid timestamp index")
-	end
-end
-
 -------------------------------------------------------------------------------------------------------
 ---- IPSec offloading
 -------------------------------------------------------------------------------------------------------
