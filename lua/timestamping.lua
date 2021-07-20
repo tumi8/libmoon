@@ -120,11 +120,11 @@ function timestamper:measureLatency(pktSize, packetModifier, maxWait)
 					local timesync = self.useTimesync and buf:getTimesync() or 0
 					local seq = (self.udp and buf:getUdpPtpPacket() or buf:getPtpPacket()).ptp:getSequenceID()
 					if buf:hasTimestamp() and seq == expectedSeq and ((seq == timestampedPkt or timestampedPkt == -1) or (self.rxDev.embeddedTimestampInPacket)) then
-						-- yay!
-
+						-- yay!		
+							
 						local rxTs
 						if self.rxDev.embeddedTimestampInPacket then
-							rxTs = buf:getTimestamp()
+							rxTs = buf:getTimestamp(self.rxDev)
 						else
 							rxTs = self.rxQueue:getTimestamp(nil, timesync) 
 							if not rxTs then
