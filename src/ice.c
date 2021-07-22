@@ -5,6 +5,8 @@
 #include <ice_common.h>
 #include <ice_sbq_cmd.h>
 #include <ice_ethdev.h>
+#include <ice_sched.h>
+#include <ice_status.h>
 
 // XXX start of copied (and modified) ice driver code
 #define cpu_to_le16(o) rte_cpu_to_le_16(o)
@@ -169,6 +171,36 @@ uint64_t ice_tx_timestamps_read(int port, int slot, uint64_t* tx_prev_ts, uint64
 	}
 	(*tx_prev_ts) = ts;
 	return ((*tx_wraparound_ctr) << 32) | ts;
+}
+
+void ice_set_q_bw_limit(int port, int queue, uint32_t bw){
+	struct ice_hw *hw;
+	struct ice_pf *pf;
+	enum ice_status status;
+
+	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
+	pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
+
+	status = ice_cfg_q_bw_lmt(hw->port_info, pf->main_vsi->idx, 0, queue, ICE_MAX_BW, bw * 1000);
+
+	if(status != ICE_SUCCESS){
+		printf("Could not set max bandwidth limit for queue %d!\n", queue);
+	}
+}
+
+void ice_set_bw_limit(int port, uint32_t bw){
+	struct ice_hw *hw;
+	struct ice_pf *pf;
+	enum ice_status status;
+
+	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
+	pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
+
+	status = ice_cfg_vsi_bw_lmt_per_tc(hw->port_info, pf->main_vsi->idx, 0, ICE_MAX_BW, bw * 1000);
+
+	if(status != ICE_SUCCESS){
+		printf("Could not set max bandwidth limit for port %d!\n", port);
+	}
 }
 
 uint64_t ice_read_current_timer(int port){

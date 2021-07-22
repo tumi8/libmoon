@@ -424,6 +424,10 @@ ffi.cdef[[
 
 	int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error);
 
+	//ice bw limiting
+	void ice_set_q_bw_limit(int port, int queue, uint32_t bw);
+	void ice_set_bw_limit(int port, uint32_t bw);
+
 	// statistics
 	void rte_eth_stats_get(uint8_t port, struct rte_eth_stats* stats);
 ]]

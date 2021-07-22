@@ -636,6 +636,10 @@ function rxQueue:filterL2Timestamps()
 	return self.dev:filterL2Timestamps(self)
 end
 
+function dev:getUdpTimestampFilter(ptpType, ver)
+	self:unsupported("Flex Byte UDP Payload Filter not implemented")
+end
+
 function mod.getDevices()
 	local result = {}
 	for i = 0, dpdkc.rte_eth_dev_count_avail() - 1 do
@@ -752,6 +756,12 @@ end
 --- Set the tx rate of a queue in Mbit/s.
 --- This sets the payload rate, not to the actual wire rate, i.e. preamble, SFD, and IFG are ignored.
 function txQueue:setRate(rate)
+	-- dpdk does not implement per queue rate limiting for e810 cards, so use a custom implementation
+	if(self.dev.customRateLimitPerQueue) then
+		dpdkc.ice_set_q_bw_limit(self.dev.id, self.qid, rate)
+		return
+	end
+
 	local rc = dpdkc.rte_eth_set_queue_rate_limit(self.id, self.qid, rate)
 	if rc == -E.NOTSUP then
 		-- fails if doing this from multiple threads

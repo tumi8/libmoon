@@ -9,10 +9,15 @@ local eth   = require "proto.ethernet"
 dev.supportsFdir  				= true
 dev.useTimsyncIds 				= false
 dev.embeddedTimestampInPacket	= true
+dev.customRateLimitPerQueue		= true
 
 ffi.cdef[[
 int libmoon_ice_reset_timecounters(uint32_t port_id);
 ]]
+
+function dev:setRate(rate)
+	dpdkc.ice_set_bw_limit(self.id, tonumber(rate))
+end
 
 function dev:filterL2Timestamps(queue)
 	local qid = type(queue) == "number" and queue or queue.qid
