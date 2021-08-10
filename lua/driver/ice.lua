@@ -10,6 +10,7 @@ dev.supportsFdir  				= true
 dev.useTimsyncIds 				= false
 dev.embeddedTimestampInPacket	= true
 dev.customRateLimitPerQueue		= true
+dev.skipSync					= true
 
 ffi.cdef[[
 int libmoon_ice_reset_timecounters(uint32_t port_id);

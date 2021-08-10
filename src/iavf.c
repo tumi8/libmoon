@@ -4,6 +4,7 @@
 
 uint64_t iavf_tx_timestamp_read_raw(int port){
     struct iavf_adapter *adapter = IAVF_DEV_PRIVATE_TO_ADAPTER(rte_eth_devices[port].data->dev_private);
+	//request tx timestamp from PF
     return iavf_get_ieee1588_tmst(adapter);
 }
 

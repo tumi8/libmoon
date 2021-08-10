@@ -171,6 +171,10 @@ end
 
 
 function mod.syncClocks(dev1, dev2)
+	if dev1.skipSync or dev2.skipSync then
+		return
+	end
+
 	local regs1 = dev1.timeRegisters
 	local regs2 = dev2.timeRegisters
 	if regs1[1] ~= regs2[1]

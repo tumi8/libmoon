@@ -637,7 +637,7 @@ function rxQueue:filterL2Timestamps()
 end
 
 function dev:getUdpTimestampFilter(ptpType, ver)
-	self:unsupported("Flex Byte UDP Payload Filter not implemented")
+	self:unsupported("Flex Byte UDP Payload Filter")
 end
 
 function mod.getDevices()
