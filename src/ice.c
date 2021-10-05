@@ -116,9 +116,12 @@ static int ice_phy_quad_reg_read_ext(struct ice_hw *hw, struct ice_pf *pf, u32 a
 
 // XXX end of copied (and modified) ice driver code
 int libmoon_ice_reset_timecounters(uint32_t port_id) {
-	struct ice_pf* pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port_id].data->dev_private);
-	pf->wraparound_ctr = 0;
-	pf->prev_ts = 0;
+	struct rte_eth_dev_data *data = rte_eth_devices[port_id].data;
+	
+	for (int i = 0; i < data->nb_rx_queues; i++) {
+		data->rx_queues[i]->wraparound_ctr = 0;
+		data->rx_queues[i]->prev_ts = 0;
+	}
 	return 0;
 }
 
