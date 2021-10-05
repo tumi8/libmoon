@@ -7,6 +7,7 @@
 #include <ice_ethdev.h>
 #include <ice_sched.h>
 #include <ice_status.h>
+#include <ice_rxtx.h>
 
 // XXX start of copied (and modified) ice driver code
 #define cpu_to_le16(o) rte_cpu_to_le_16(o)
@@ -119,8 +120,9 @@ int libmoon_ice_reset_timecounters(uint32_t port_id) {
 	struct rte_eth_dev_data *data = rte_eth_devices[port_id].data;
 	
 	for (int i = 0; i < data->nb_rx_queues; i++) {
-		data->rx_queues[i]->wraparound_ctr = 0;
-		data->rx_queues[i]->prev_ts = 0;
+		struct ice_rx_queue *rxq = (struct ice_rx_queue *)data->rx_queues[i];
+		rxq->wraparound_ctr = 0;
+		rxq->prev_ts = 0;
 	}
 	return 0;
 }
