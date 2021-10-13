@@ -755,10 +755,14 @@ end
 
 --- Set the tx rate of a queue in Mbit/s.
 --- This sets the payload rate, not to the actual wire rate, i.e. preamble, SFD, and IFG are ignored.
-function txQueue:setRate(rate)
+function txQueue:setRate(rate, pktSize)
 	-- dpdk does not implement per queue rate limiting for e810 cards, so use a custom implementation
 	if(self.dev.customRateLimitPerQueue) then
-		dpdkc.ice_set_q_bw_limit(self.dev.id, self.qid, rate)
+		local bwLimit = rate
+		if pktSize ~= nil then
+			bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
+		end
+		dpdkc.ice_set_q_bw_limit(self.dev.id, self.qid, bwLimit)
 		return
 	end
 
@@ -770,7 +774,7 @@ function txQueue:setRate(rate)
 		dev.totalRate = dev.totalRate or 0
 		dev.totalRate = dev.totalRate + rate
 		log:warn("Per-queue rate limit is not supported on this device, setting per-device rate limit to %d Mbit/s instead (note: this may fail as well if the NIC doesn't support any rate limiting).", dev.totalRate)
-		dev:setRate(dev.totalRate)
+		dev:setRate(dev.totalRate, pktSize)
 	elseif rc ~= 0 then
 		log:warn("Failed to set rate limiter on queue %s: %s", self, strError(rc))
 	end

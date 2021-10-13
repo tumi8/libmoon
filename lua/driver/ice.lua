@@ -16,8 +16,13 @@ ffi.cdef[[
 int libmoon_ice_reset_timecounters(uint32_t port_id);
 ]]
 
-function dev:setRate(rate)
-	dpdkc.ice_set_bw_limit(self.id, tonumber(rate))
+function dev:setRate(rate, pktSize)
+	local bwLimit = rate
+	if pktSize ~= nil then
+		bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
+	end
+	dpdkc.ice_set_bw_limit(self.id, tonumber(rate), tonumber(bwLimit))
+	
 end
 
 function dev:filterL2Timestamps(queue)
