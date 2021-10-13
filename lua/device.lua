@@ -762,7 +762,7 @@ function txQueue:setRate(rate, pktSize)
 		if pktSize ~= nil then
 			bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
 		end
-		dpdkc.ice_set_q_bw_limit(self.dev.id, self.qid, bwLimit)
+		dpdkc.ice_set_q_bw_limit(self.dev.id, self.qid, tonumber(bwLimit))
 		return
 	end
 

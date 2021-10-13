@@ -21,7 +21,7 @@ function dev:setRate(rate, pktSize)
 	if pktSize ~= nil then
 		bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
 	end
-	dpdkc.ice_set_bw_limit(self.id, tonumber(rate), tonumber(bwLimit))
+	dpdkc.ice_set_bw_limit(self.id, tonumber(bwLimit))
 	
 end
 
