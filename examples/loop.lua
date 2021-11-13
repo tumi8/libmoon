@@ -7,7 +7,7 @@ local memory = require "memory"
 local dpdkc  = require "dpdkc"
 
 -- set addresses here
-local DST_MAC       = "11:bb:cc:00:00:00"
+local DST_MAC       = "12:bb:cc:00:00:00"
 local PKT_LEN       = 60
 local SRC_IP        = "10.0.0.10"
 local DST_IP        = "10.1.0.10"
@@ -88,7 +88,7 @@ function txSlave(queue)
 		for i, buf in ipairs(bufs) do
 			-- packet framework allows simple access to fields in complex protocol stacks
 			local pkt = buf:getUdpPacket()
-			buf:enableIceTxTimestamp(0)
+			buf:enableTimestamps()
 			pkt.udp:setSrcPort(SRC_PORT_BASE + math.random(0, NUM_FLOWS - 1))
 		end
 		-- UDP checksums are optional, so using just IPv4 checksums would be sufficient here

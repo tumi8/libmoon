@@ -64,7 +64,7 @@ function master(args,...)
 			DST_MAC = arp.blockingLookup(GW_IP, 3)
 			if not DST_MAC then
 				log:info("ARP lookup failed, using default destination mac address")
-				DST_MAC = "01:23:45:67:89:ab"
+				DST_MAC = "02:23:45:67:89:ab"
 			end
 		end
 		log:info("Destination mac: %s", DST_MAC)
