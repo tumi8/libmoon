@@ -209,7 +209,7 @@ void ice_set_bw_limit(int port, uint32_t bw){
 }
 
 uint64_t ice_read_current_timer(int port){
-	u32 timeL;
+	u32 timeL, timeL2;
 	u32 timeH;
 	u8 tmr_index_owned;
 	struct ice_hw *hw;
@@ -217,21 +217,15 @@ uint64_t ice_read_current_timer(int port){
 	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
 	tmr_index_owned = 0;
 
-	// run GLTSYN_CMD_READ_TIME command
-#define GLTSYN_CMD_READ_TIME		BIT(7)
-#define SYNC_EXEC_CMD			0x3
+	//read captured time (similar procedure as in ice 1.6.4 driver function: ice_ptp_read_src_clk_reg)
+	timeL = rd32(hw, GLTSYN_TIME_L(tmr_index_owned));
+	timeH = rd32(hw, GLTSYN_TIME_H(tmr_index_owned));
+	timeL2 = rd32(hw, GLTSYN_TIME_L(tmr_index_owned));
 
-
-	
-	wr32(hw, GLTSYN_CMD, GLTSYN_CMD_READ_TIME);
-	wr32(hw, GLTSYN_CMD_SYNC, SYNC_EXEC_CMD);
-
-	//read captured time
-	timeL = rd32(hw, GLTSYN_SHTIME_H(tmr_index_owned));
-	timeH = rd32(hw, GLTSYN_HHTIME_L(tmr_index_owned));
-
-	printf("LOW: %d\n",timeL);
-	printf("HIGH: %d\n",timeH);
+	if(timeL2 < timeL){
+		timeL = rd32(hw, GLTSYN_TIME_L(tmr_index_owned));
+		timeH = rd32(hw, GLTSYN_TIME_H(tmr_index_owned));
+	}
 
 	return ((u64)timeH << 32) | timeL;
 }
