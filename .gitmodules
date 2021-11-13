@@ -7,7 +7,7 @@
 	path = deps/dpdk
 	url = https://pos:TswyWZzbgizZSHyjP9oo@gitlab.lrz.de/idp-lachnit/dpdk
 	ignore = untracked
-	branch = testing
+	branch = v21.02-libmoon
 [submodule "deps/pciids"]
 	path = deps/pciids
 	url = https://github.com/gallenmu/pciids
