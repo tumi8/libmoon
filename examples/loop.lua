@@ -39,7 +39,7 @@ function master(args)
 	device.waitForLinks()
 
 	-- print stats
-	-- stats.startStatsTask{devices = args.dev, file = args.output}
+	stats.startStatsTask{devices = args.dev, file = args.output}
 
 	-- start forwarding tasks
 	lm.startTask("txSlave", args.dev[1]:getTxQueue(0))

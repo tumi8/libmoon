@@ -758,6 +758,8 @@ end
 function txQueue:setRate(rate, pktSize)
 	-- dpdk does not implement per queue rate limiting for e810 cards, so use a custom implementation
 	if(self.dev.customRateLimitPerQueue) then
+		-- The rate, which is printed by the stats task does not match the rate, which is set in the rate limiting function.
+		-- Therfore we added a correction function
 		local bwLimit = rate
 		if pktSize ~= nil then
 			bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate

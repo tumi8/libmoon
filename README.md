@@ -36,7 +36,7 @@ Just run `build.sh`, `bind-interfaces.sh`, and `setup-hugetlbfs.sh`. When using 
 
 ```
 # install dependencies and compile libmoon
-sudo apt-get install git build-essential cmake linux-headers-`uname -r` lshw libnuma-dev
+sudo apt-get install git build-essential cmake linux-headers-`uname -r` lshw libnuma-dev meson ninja-build pkg-config python3-pyelftools
 git clone https://github.com/WiednerF/libmoon
 cd libmoon
 ./build.sh
@@ -54,6 +54,10 @@ Note: Use `deps/dpdk/tools/dpdk-devbind.py` to manage NIC drivers manually to ge
 * gcc >= 4.8
 * make
 * cmake
+* meson
+* ninja-build
+* pkg-config
+* python3-pyelftools
 * kernel headers (for the DPDK igb-uio driver)
 * lspci (for dpdk-devbind.py)
 * libnuma-dev
@@ -64,7 +68,8 @@ Note: Use `deps/dpdk/tools/dpdk-devbind.py` to manage NIC drivers manually to ge
 libmoon supports all [NICs supported by DPDK](http://dpdk.org/doc/nics).
 Note that some NICs (e.g., [Mellanox](install-mlx.md)) require external components to work with DPDK.
 Refer to the DPDK documentation for further information.
-We test and develop libmoon on various NICs of the ixgbe, i40e, and igb family.
+We test and develop libmoon on various NICs of the ice, ixgbe, i40e, and igb family.
+Hardware checksum offloading and timestamping currently does not work on ixgbe NICs with this version of libmoon.
 
 ### Why should I use this instead of DPDK directly?
 It's easier to get started. Seriously, have you tried reading one of the DPDK examples?

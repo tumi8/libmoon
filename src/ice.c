@@ -141,6 +141,7 @@ uint64_t ice_tx_timestamps_read_register(int port, int slot){
 	pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
 	lport = hw->port_info->lport;
 
+	// read LOW part of TX timestamp from the PHY registers
 	addr = TS_EXT(LOW_TX_MEMORY_BANK_START, lport, slot);
 	err = ice_phy_quad_reg_read_ext(hw, pf, addr, &val);
 	if (err){
@@ -150,6 +151,7 @@ uint64_t ice_tx_timestamps_read_register(int port, int slot){
 
 	ts = val;
 
+	// read HIGH part of TX timestamp from the PHY registers
 	addr = TS_EXT(HIGH_TX_MEMORY_BANK_START, lport, slot);
 	err = ice_phy_quad_reg_read_ext(hw, pf, addr, &val);
 	if (err){
@@ -160,6 +162,7 @@ uint64_t ice_tx_timestamps_read_register(int port, int slot){
 		}
 	}
 
+	//combine both parts of timestamp
 	ts |= ((u64)val) << 32;
 
 	return ts;
@@ -171,13 +174,16 @@ uint64_t ice_tx_timestamps_read(int port, int slot, uint64_t* tx_prev_ts, uint64
 	//remove sub nanosecond part and valid bit	
 	uint64_t ts = (hw_ts>>8);
 
+	//handle wraparound
 	if ((*tx_prev_ts) > ts) {
 		(*tx_wraparound_ctr)++;	
 	}
 	(*tx_prev_ts) = ts;
+
 	return ((*tx_wraparound_ctr) << 32) | ts;
 }
 
+// set rate limting for a single queue
 void ice_set_q_bw_limit(int port, int queue, uint32_t bw){
 	struct ice_hw *hw;
 	struct ice_pf *pf;
@@ -193,6 +199,7 @@ void ice_set_q_bw_limit(int port, int queue, uint32_t bw){
 	}
 }
 
+// set rate limting for the device
 void ice_set_bw_limit(int port, uint32_t bw){
 	struct ice_hw *hw;
 	struct ice_pf *pf;
@@ -208,6 +215,7 @@ void ice_set_bw_limit(int port, uint32_t bw){
 	}
 }
 
+// read timer value of the PTP counter on the controller
 uint64_t ice_read_current_timer(int port){
 	u32 timeL, timeL2;
 	u32 timeH;
@@ -230,6 +238,7 @@ uint64_t ice_read_current_timer(int port){
 	return ((u64)timeH << 32) | timeL;
 }
 
+// intialize PTP hardware on the E810 NIC
 void ice_init_timer(int port) {
 	u32 regval;
 	u8 tmr_index_owned;

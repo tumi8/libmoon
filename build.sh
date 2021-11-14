@@ -5,28 +5,29 @@ FLAGS=""
 
 #OPTIONS is filled with options for cmake
 OPTIONS=''
-MLX5=false
-MLX4=false
+#MLX5=false
+#MLX4=false
 MOON=false
 
 while :; do
 	case $1 in
 		-h|--help)
-			echo "Usage: <no option> compile without Mellanox drivers; <-m|--mlx5> compile mlx5; <-n|--mlx4> compile mlx4; <-h|--help> help;"
+			#echo "Usage: <no option> compile without Mellanox drivers; <-m|--mlx5> compile mlx5; <-n|--mlx4> compile mlx4; <-h|--help> help;"
+			echo "Usage: <no option> Mellanox drivers should be automatically compiled, when the dependencies are installed; <-h|--help> help;"
 			exit
 			;;
-		-m|--mlx5)
-			echo "Build with mlx5 driver selected"
-			OPTIONS="$OPTIONS""-DUSE_MLX5=ON "
-			MLX5=true
-			FLAGS="$FLAGS""--mlx5 "
-			;;
-		-n|--mlx4)
-			echo "Build with mlx4 driver selected"
-			OPTIONS="$OPTIONS""-DUSE_MLX4=ON "
-			MLX4=true
-			FLAGS="$FLAGS""--mlx4 "
-			;;
+		#-m|--mlx5)
+		#	echo "Build with mlx5 driver selected"
+		#	OPTIONS="$OPTIONS""-DUSE_MLX5=ON "
+		#	MLX5=true
+		#	FLAGS="$FLAGS""--mlx5 "
+		#	;;
+		#-n|--mlx4)
+		#	echo "Build with mlx4 driver selected"
+		#	OPTIONS="$OPTIONS""-DUSE_MLX4=ON "
+		#	MLX4=true
+		#	FLAGS="$FLAGS""--mlx4 "
+		#	;;
 		--moongen) #For internal use only
 			echo "Build libmoon with MoonGen"
 			MOON=true
@@ -97,8 +98,8 @@ PKG_CONFIG_PATH=$PKG_CONFIG_PATH cmake ${OPTIONS}..
 PKG_CONFIG_PATH=$PKG_CONFIG_PATH make -j $NUM_CPUS
 )
 
-#echo Trying to bind interfaces, this will fail if you are not root
-#echo Try "sudo ./bind-interfaces.sh" if this step fails
-#./bind-interfaces.sh ${FLAGS}
+echo Trying to bind interfaces, this will fail if you are not root
+echo Try "sudo ./bind-interfaces.sh" if this step fails
+./bind-interfaces.sh ${FLAGS}
 )
 

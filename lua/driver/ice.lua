@@ -16,8 +16,12 @@ ffi.cdef[[
 int libmoon_ice_reset_timecounters(uint32_t port_id);
 ]]
 
+-- set global rate liming
 function dev:setRate(rate, pktSize)
 	local bwLimit = rate
+
+	-- The rate, which is printed by the stats task does not match the rate, which is set in the rate limiting function.
+	-- Therfore we added a correction function, which changes the set rate based on the packet size
 	if pktSize ~= nil then
 		bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
 	end
@@ -25,6 +29,7 @@ function dev:setRate(rate, pktSize)
 	
 end
 
+-- remove previous filters and add new filter to direct L2 PTP packets to the specified queue
 function dev:filterL2Timestamps(queue)
 	local qid = type(queue) == "number" and queue or queue.qid
 	if qid == 0 then
@@ -34,19 +39,18 @@ function dev:filterL2Timestamps(queue)
 	end
 end
 
+-- initalize the PTP hardware (same as for single packets in dev:enableRxTimestamps)
 function dev:enableRxTimestampsAllPackets()
 	dpdkc.ice_init_timer(self.id)
 end
 
+-- initalize the PTP hardware 
 function dev:enableRxTimestamps(queue, udpPort)
 	ffi.C.libmoon_ice_reset_timecounters(self.id)
 	dpdkc.ice_init_timer(self.id)
-
-	if udpPort ~= nil then
-		self:udpFilter({dst_port = udpPort}, queue.qid)
-	end
 end
 
+-- initalize the PTP hardware and initialize variables for handling TX timestamp overflow
 function dev:enableTxTimestamps(queue)
 	self.tx_prev_ts = ffi.new("uint64_t[1]")
 	self.tx_prev_ts[0] = 0
@@ -64,21 +68,22 @@ function dev:resetTimeCounters()
 	ffi.C.libmoon_ice_reset_timecounters(self.id)
 end
 
-
+-- read TX timestamp slot 0 from the PHY registers
 function dev:getTxTimestamp(queue, wait)
 	return tonumber(dpdkc.ice_tx_timestamps_read(self.id, 0, self.tx_prev_ts, self.tx_wraparound_ctr))
 end
 
+-- return timer value of the PTP timer on the E810 controller
 function dev:readTime()
 	return tonumber(dpdkc.ice_read_current_timer(self.id))
 end
 
--- yes, this card supports timestamping
--- (TODO might want to implement something here)
 dev.timeRegisters = {0, 0, 0, 0}
 
 function dev:hasRxTimestamp() return 1 end
 
+-- this function is called from the filter module to get a DPDK generic flow API
+-- pattern list to match UDP PTP packets, which works on E810 NICs (tested on E810-C)
 function dev:getUdpTimestampFilter(ptpType, ver)
 	-- set the flow items (filters)
 	local rawPattern = ffi.new("uint8_t[2]")
@@ -88,6 +93,8 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 	rawMask[0] = 0xFF
 	rawMask[1] = 0xFF
 
+	-- match IPv4, with an ethertype corresponding to UDP, which an addional flex byte filter
+	-- the offset of the RAW pattern is specified from the start of the ethernet frame
 	local filters = ffi.new("struct rte_flow_item[4]", {
 		ffi.new("struct rte_flow_item", {
 			type = ffi.C.RTE_FLOW_ITEM_TYPE_ETH,

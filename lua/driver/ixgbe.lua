@@ -34,6 +34,9 @@ local TSYNCRXCTL_TSIP_UP_EN_OFFS = 24
 local ETQS_RX_QUEUE_OFFS   = 16
 local ETQS_QUEUE_ENABLE    = bit.lshift(1, 31)
 
+-- when enabling IPv4 or UDP checksum hardware offloading in this version of Moongen
+-- the tested X520 NIC did not transmit any packets. Therefore all hardware offloading
+-- is disabled. When this feature is required an older version of libmoon should be used
 dev.driverInfo = {
 	disableOffloads = true
 }
@@ -125,6 +128,8 @@ end
 
 dev.embeddedTimestampAtEndOfBuffer = true
 
+-- this function is called from the filter module to get a DPDK generic flow API
+-- pattern list to match UDP PTP packets, which works on X500 NICs (tested on X520)
 function dev:getUdpTimestampFilter(ptpType, ver)
 	-- set the flow items (filters)
 	local rawPattern = ffi.new("uint8_t[2]")
@@ -134,6 +139,8 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 	rawMask[0] = 0xFF
 	rawMask[1] = 0xFF
 
+	-- match IPv4 UDP packets, which an addional flex byte filter
+	-- the offset of the RAW pattern is specified from the start of ethernet frame
 	local filters = ffi.new("struct rte_flow_item[5]", {
 		ffi.new("struct rte_flow_item", {
 			type = ffi.C.RTE_FLOW_ITEM_TYPE_ETH,

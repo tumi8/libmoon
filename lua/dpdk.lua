@@ -27,7 +27,7 @@ mod.PKT_RX_FDIR_ID				= bit.lshift(1ULL, 13)
 mod.PKT_RX_FDIR_FLX				= bit.lshift(1ULL, 14)
 mod.PKT_RX_QINQ_STRIPPED		= bit.lshift(1ULL, 15)
 mod.PKT_RX_LRO					= bit.lshift(1ULL, 16)
-mod.PKT_RX_TIMESTAMP		= bit.lshift(1ULL, 17)
+mod.PKT_RX_TIMESTAMP			= bit.lshift(1ULL, 17)
 mod.PKT_RX_SEC_OFFLOAD			= bit.lshift(1ULL, 18)
 mod.PKT_RX_SEC_OFFLOAD_FAILED	= bit.lshift(1ULL, 19)
 mod.PKT_RX_QINQ					= bit.lshift(1ULL, 20)
@@ -218,7 +218,13 @@ function mod.init()
 			argv[#argv + 1] = v
 		end
 	end
+
+	-- disable vector receive and transmit functions.
+	-- This is necessary, because RX timestamps are only processed in the
+	-- scalar function for E810 NICs
 	argv[#argv + 1] = "--force-max-simd-bitwidth=64"
+
+
 	local argc = #argv
 	dpdkc.rte_eal_init(argc, ffi.new("const char*[?]", argc, argv))
 	local device = require "device"

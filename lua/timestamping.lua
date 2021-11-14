@@ -171,6 +171,9 @@ end
 
 
 function mod.syncClocks(dev1, dev2)
+	-- skip synchronization on E810 NICs
+	-- Therfore timestamping only works, when both ports are part
+	-- of the same physical NIC
 	if dev1.skipSync or dev2.skipSync then
 		return
 	end

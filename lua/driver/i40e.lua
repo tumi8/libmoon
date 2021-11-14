@@ -171,8 +171,11 @@ function dev:hasRxTimestamp()
 	return bit.band(stats, PRTTSYN_STAT_1_RXT_ALL) ~= 0 and -1 or nil
 end
 
+
+-- this function is called from the filter module to get a DPDK generic flow API
+-- pattern list to match UDP PTP packets, which works on X700 NICs (tested on XXV710)
 function dev:getUdpTimestampFilter(ptpType, ver)
-	-- set the flow items (filters)
+	-- initialize raw pattern and mask 
 	local rawPattern = ffi.new("uint8_t[2]")
 	local rawMask = ffi.new("uint8_t[2]")
 	rawPattern[0] = ptpType
@@ -180,6 +183,8 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 	rawMask[0] = 0xFF
 	rawMask[1] = 0xFF
 
+	-- match IPv4 UDP packets, which an addional flex byte filter
+	-- the offset of the RAW pattern is specified from the start of the UDP payload
 	local filters = ffi.new("struct rte_flow_item[5]", {
 		ffi.new("struct rte_flow_item", {
 			type = ffi.C.RTE_FLOW_ITEM_TYPE_ETH,

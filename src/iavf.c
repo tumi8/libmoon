@@ -14,9 +14,11 @@ uint64_t iavf_tx_timestamps_read(int port, int slot, uint64_t* tx_prev_ts, uint6
 	//remove sub nanosecond part and valid bit	
 	uint64_t ts = (hw_ts>>8);
 
+	//handle TX wraparound
 	if ((*tx_prev_ts) > ts) {
 		(*tx_wraparound_ctr)++;	
 	}
 	(*tx_prev_ts) = ts;
+
 	return ((*tx_wraparound_ctr) << 32) | ts;
 }

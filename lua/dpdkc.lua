@@ -417,14 +417,14 @@ ffi.cdef[[
 	void set_timestamp_dynfield(struct rte_mbuf *m, uint64_t timestamp);
 	void init_timestamp_dynfield_offset();
 
-	//ice timestamping
+	// e810 timestamping
 	uint64_t ice_tx_timestamps_read(int port, int slot, uint64_t* tx_prev_ts, uint64_t* tx_wraparound_ctr);
 	uint64_t ice_read_current_timer(int port);
 	uint64_t iavf_tx_timestamps_read(int port, int slot, uint64_t* tx_prev_ts, uint64_t* tx_wraparound_ctr);
 
 	int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error);
 
-	//ice bw limiting
+	// ice bw limiting
 	void ice_set_q_bw_limit(int port, int queue, uint32_t bw);
 	void ice_set_bw_limit(int port, uint32_t bw);
 

@@ -34,6 +34,7 @@ function dev:getTxTimestamp(queue, wait)
 	return tonumber(dpdkc.iavf_tx_timestamps_read(self.id, 0, self.tx_prev_ts, self.tx_wraparound_ctr))
 end
 
+-- remove previous filters and add new filter to direct L2 PTP packets to the specified queue
 function dev:filterL2Timestamps(queue)
 	local qid = type(queue) == "number" and queue or queue.qid
 	if qid == 0 then
@@ -43,6 +44,9 @@ function dev:filterL2Timestamps(queue)
 	end
 end
 
+-- this function is called from the filter module to get a DPDK generic flow API
+-- pattern list to match UDP PTP packets, which works on E810 VFs. This only works
+-- with a modified version of the DPDK VF and PF drivers
 function dev:getUdpTimestampFilter(ptpType, ver)
 	-- set the flow items (filters)
 	local rawPattern = ffi.new("uint8_t[2]")
@@ -52,6 +56,8 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 	rawMask[0] = 0xFF
 	rawMask[1] = 0xFF
 
+	-- match IPv4, with an ethertype corresponding to UDP, which an addional flex byte filter
+	-- the offset of the RAW pattern is specified from the start of the ethernet frame
 	local filters = ffi.new("struct rte_flow_item[4]", {
 		ffi.new("struct rte_flow_item", {
 			type = ffi.C.RTE_FLOW_ITEM_TYPE_ETH,
