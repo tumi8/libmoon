@@ -875,7 +875,7 @@ function rxQueue:recv(bufArray, numpkts)
 	return 0
 end
 
---- Receive packets from a rx queue and save timestamps in the udata64 field.
+--- Receive packets from a rx queue and save timestamps in the rx timestamp dynfield.
 --- Returns as soon as at least one packet is available.
 function rxQueue:recvWithTimestamps(bufArray, numpkts)
 	numpkts = numpkts or bufArray.size

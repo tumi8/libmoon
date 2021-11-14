@@ -185,7 +185,7 @@ ffi.cdef[[
 	uint32_t libmoon_read_pcap_batch(struct mempool* mp, struct rte_mbuf** bufs, uint32_t num_bufs, const void* pcap, uint64_t remaining, uint32_t mempool_buf_size);
 ]]
 
---- Read the next packet into a buf, the timestamp is stored in the udata64 field as microseconds.
+--- Read the next packet into a buf, the timestamp is stored in the timestamping dynfield as microseconds.
 --- The buffer's packet size corresponds to the original packet size, cut off bytes are zero-filled.
 function reader:readSingle(mempool, mempoolBufSize)
 	mempoolBufSize = mempoolBufSize or 2048
@@ -202,7 +202,7 @@ function reader:readSingle(mempool, mempoolBufSize)
 	return buf
 end
 
---- Read a batch of packets into a bufArray, the timestamp is stored in the udata64 field as microseconds.
+--- Read a batch of packets into a bufArray, the timestamp is stored in the timesamping dynfield as microseconds.
 --- The buffer's packet size corresponds to the original packet size, cut off bytes are zero-filled.
 --- @return the number of packets read
 function reader:read(bufs, mempoolBufSize)
