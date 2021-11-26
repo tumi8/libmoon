@@ -6,11 +6,17 @@ local ffi   = require "ffi"
 local log   = require "log"
 local eth   = require "proto.ethernet"
 
+dev.e810						= true
 dev.supportsFdir  				= true
 dev.useTimsyncIds 				= false
 dev.embeddedTimestampInPacket	= true
 dev.customRateLimitPerQueue		= true
 dev.skipSync					= true
+
+-- overhead per packet and maximum packet rate for use with crc rate limiting
+dev.packetOverhead				= 24 --byte
+dev.maxPacketRate				= 30 --Mpps
+dev.lineRate 					= 100 --Gbps
 
 ffi.cdef[[
 int libmoon_ice_reset_timecounters(uint32_t port_id);
