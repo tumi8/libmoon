@@ -1,5 +1,6 @@
 #include <rte_config.h>
 #include <rte_ethdev.h> 
+#include <ethdev_driver.h>
 #include <rte_mempool.h>
 #include <rte_ether.h>
 #include <rte_cycles.h>
@@ -121,8 +122,8 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		.rss_hf = cfg->rss_mask & dev_info.flow_type_rss_offloads,
 	};
 	uint64_t rx_offloads = (cfg->disable_offloads ?
-		(DEV_RX_OFFLOAD_JUMBO_FRAME | DEV_RX_OFFLOAD_TIMESTAMP)
-		: (DEV_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? DEV_RX_OFFLOAD_VLAN_STRIP : 0) | DEV_RX_OFFLOAD_VLAN_EXTEND | DEV_RX_OFFLOAD_JUMBO_FRAME | DEV_RX_OFFLOAD_TIMESTAMP))
+		(DEV_RX_OFFLOAD_TIMESTAMP)
+		: (DEV_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? DEV_RX_OFFLOAD_VLAN_STRIP : 0) | DEV_RX_OFFLOAD_VLAN_EXTEND | DEV_RX_OFFLOAD_TIMESTAMP))
 		& dev_info.rx_offload_capa;
 	uint64_t tx_offloads = (cfg->disable_offloads ?
 		DEV_TX_OFFLOAD_MBUF_FAST_FREE
@@ -133,7 +134,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 			.mq_mode = cfg->enable_rss ? ETH_MQ_RX_RSS : ETH_MQ_RX_NONE,
 			.split_hdr_size = 0,
 			.offloads = rx_offloads,
-			.max_rx_pkt_len = dev_info.max_rx_pktlen
+			.mtu = dev_info.max_mtu
 		},
 		.txmode = {
 			.mq_mode = ETH_MQ_TX_NONE,

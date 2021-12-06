@@ -410,6 +410,7 @@ ffi.cdef[[
 	int rte_eth_timesync_read_tx_timestamp(uint16_t port_id, struct timespec* timestamp);
 	int rte_eth_timesync_read_rx_timestamp(uint16_t port_id, struct timespec* timestamp, uint32_t timesync);
 	int rte_eth_timesync_read_time(uint16_t port_id, struct timespec* time);
+	int rte_eth_timesync_write_time(uint16_t port_id, struct timespec* timestamp);
 	void libmoon_sync_clocks(uint8_t port1, uint8_t port2, uint32_t timl, uint32_t timh, uint32_t adjl, uint32_t adjh);
 	
 	// timestamping dynfield
@@ -418,7 +419,7 @@ ffi.cdef[[
 	void init_timestamp_dynfield_offset();
 
 	// e810 timestamping
-	uint64_t ice_tx_timestamps_read(int port, int slot, uint64_t* tx_prev_ts, uint64_t* tx_wraparound_ctr);
+	void ice_reset_timer(int port);
 	uint64_t ice_read_current_timer(int port);
 	uint64_t iavf_tx_timestamps_read(int port, int slot, uint64_t* tx_prev_ts, uint64_t* tx_wraparound_ctr);
 

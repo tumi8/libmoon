@@ -18,10 +18,6 @@ dev.packetOverhead				= 24 --byte
 dev.maxPacketRate				= 30 --Mpps
 dev.lineRate 					= 100 --Gbps
 
-ffi.cdef[[
-int libmoon_ice_reset_timecounters(uint32_t port_id);
-]]
-
 -- set global rate liming
 function dev:setRate(rate, pktSize)
 	local bwLimit = rate
@@ -47,36 +43,28 @@ end
 
 -- initalize the PTP hardware (same as for single packets in dev:enableRxTimestamps)
 function dev:enableRxTimestampsAllPackets()
-	dpdkc.ice_init_timer(self.id)
+	dpdkc.rte_eth_timesync_enable(self.id)
+	self:resetTimeCounters()
 end
 
 -- initalize the PTP hardware 
 function dev:enableRxTimestamps(queue, udpPort)
-	ffi.C.libmoon_ice_reset_timecounters(self.id)
-	dpdkc.ice_init_timer(self.id)
+	dpdkc.rte_eth_timesync_enable(self.id)
+	self:resetTimeCounters()
 end
 
 -- initalize the PTP hardware and initialize variables for handling TX timestamp overflow
 function dev:enableTxTimestamps(queue)
-	self.tx_prev_ts = ffi.new("uint64_t[1]")
-	self.tx_prev_ts[0] = 0
-	self.tx_wraparound_ctr = ffi.new("uint64_t[1]")
-	self.tx_wraparound_ctr[0] = 0
-
-	dpdkc.ice_init_timer(self.id)
+	dpdkc.rte_eth_timesync_enable(self.id)
+	self:resetTimeCounters()
 end
 
-function dev:resetTimeCounters() 
-	if(self.tx_prev_ts) then
-		self.tx_prev_ts[0] = 0
-		self.tx_wraparound_ctr[0] = 0
-	end
-	ffi.C.libmoon_ice_reset_timecounters(self.id)
-end
-
--- read TX timestamp slot 0 from the PHY registers
-function dev:getTxTimestamp(queue, wait)
-	return tonumber(dpdkc.ice_tx_timestamps_read(self.id, 0, self.tx_prev_ts, self.tx_wraparound_ctr))
+function dev:resetTimeCounters()
+	local ts = ffi.new("struct timespec")
+	ts.tv_sec = 0
+	ts.tv_nsec = 0
+	dpdkc.rte_eth_timesync_write_time(self.id, ts)
+	dpdkc.ice_reset_timer(self.id)
 end
 
 -- return timer value of the PTP timer on the E810 controller

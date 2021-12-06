@@ -62,7 +62,7 @@ SET(ALL_LIBS
 
 INCLUDE_DIRECTORIES(
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/x86_64-native-linux-gcc/include
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/lib/librte_ethdev
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/lib/ethdev
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/bnxt
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ixgbe/base
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ixgbe
