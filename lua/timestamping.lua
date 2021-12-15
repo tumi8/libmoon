@@ -23,15 +23,16 @@ function mod:newTimestamper(txQueue, rxQueue, mem, udp, doNotConfigureUdpPort)
 		-- defaults are good enough for us here
 		if udp then
 			buf:getUdpPtpPacket():fill{
-				ethSrc = txQueue,
+				
 				-- filters do not work on e810 when using multicast mac dst addresses 
-				ethDst = "22:33:44:55:66:77"
+				ethDst = "22:33:44:55:66:77",
+				ethSrc = "22:33:44:55:66:78"
 			}
 		else
 			buf:getPtpPacket():fill{
-				ethSrc = txQueue,
 				-- filters do not work on e810 when using multicast mac dst addresses
-				ethDst = "22:33:44:55:66:77"
+				ethDst = "22:33:44:55:66:77",
+				ethSrc = "22:33:44:55:66:78"
 			}
 		end
 	end)
@@ -120,8 +121,8 @@ function timestamper:measureLatency(pktSize, packetModifier, maxWait)
 					local timesync = self.useTimesync and buf:getTimesync() or 0
 					local seq = (self.udp and buf:getUdpPtpPacket() or buf:getPtpPacket()).ptp:getSequenceID()
 					if buf:hasTimestamp() and seq == expectedSeq and ((seq == timestampedPkt or timestampedPkt == -1) or (self.rxDev.embeddedTimestampInPacket)) then
-						-- yay!		
-							
+						-- yay!	 
+
 						local rxTs
 						if self.rxDev.embeddedTimestampInPacket then
 							rxTs = buf:getTimestamp(self.rxDev)
