@@ -4,6 +4,7 @@ local dev = {}
 local ffi   = require "ffi"
 local dpdkc = require "dpdkc"
 local eth   = require "proto.ethernet"
+local log   = require "log"
 
 dev.supportsFdir  				= true
 dev.useTimsyncIds 				= false
@@ -14,7 +15,17 @@ dev.timeRegisters = {0, 0, 0, 0}
 
 -- timestamps are automatically enabled for all RX and TX queues,
 -- when using the modified version of the ice driver
-function dev:enableRxTimestamps(self, udpPort) end
+function dev:enableRxTimestamps(self, udpPort)
+	if not dpdkc.iavf_modified_driver_detected(self.id) then
+		log:fatal("rx timestamping for E810 VFs requires a modified version of the PF driver")
+	end
+end
+
+function dev:enableRxTimestampsAllPackets()
+	if not dpdkc.iavf_modified_driver_detected(self.id) then
+		log:fatal("rx timestamping for E810 VFs requires a modified version of the PF driver")
+	end
+end
 
 -- resetting the counter from a virtual function is not possible 
 function dev:resetTimeCounters() return 1 end
@@ -24,6 +35,9 @@ function dev:resetTimeCounters() return 1 end
 function dev:hasRxTimestamp() return 1 end
 
 function dev:enableTxTimestamps(queue)
+	if not dpdkc.iavf_modified_driver_detected(self.id) then
+		log:fatal("tx timestamping for E810 VFs requires a modified version of the PF driver")
+	end
 	self.tx_prev_ts = ffi.new("uint64_t[1]")
 	self.tx_prev_ts[0] = 0
 	self.tx_wraparound_ctr = ffi.new("uint64_t[1]")

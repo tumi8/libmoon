@@ -422,6 +422,7 @@ ffi.cdef[[
 	void ice_reset_timer(int port);
 	uint64_t ice_read_current_timer(int port);
 	uint64_t iavf_tx_timestamps_read(int port, int slot, uint64_t* tx_prev_ts, uint64_t* tx_wraparound_ctr);
+	bool iavf_modified_driver_detected(int port);
 
 	int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error);
 
