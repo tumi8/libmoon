@@ -219,11 +219,6 @@ function mod.init()
 		end
 	end
 
-	-- disable vector receive and transmit functions.
-	-- This is necessary, because RX timestamps are only processed in the
-	-- scalar function for E810 NICs
-	argv[#argv + 1] = "--force-max-simd-bitwidth=64"
-
 
 	local argc = #argv
 	dpdkc.rte_eal_init(argc, ffi.new("const char*[?]", argc, argv))
@@ -234,6 +229,14 @@ function mod.init()
 		printf("   Device %d: %s (%s)", device.id, device.mac, green(device.name))
 	end
 	dpdkc.init_timestamp_dynfield_offset()
+
+	-- disable vector receive and transmit functions.
+	-- This is necessary, because RX and TX timestamps are only processed in the
+	-- scalar function for E810 NICs. Vector TX and RX funtions can be activated by calling
+	-- function "dpdkc.rte_vect_set_max_simd_bitwidth(512)".
+	-- This may break timestamping on Intel E810 VFs and PFs
+	dpdkc.rte_vect_set_max_simd_bitwidth(64)
+
 	return true
 end
 

@@ -383,6 +383,7 @@ ffi.cdef[[
 	void dpdk_send_all_packets(uint16_t port_id, uint16_t queue_id, struct rte_mbuf** pkts, uint16_t num_pkts);
 	void dpdk_send_single_packet(uint16_t port_id, uint16_t queue_id, struct rte_mbuf* pkt);
 	uint16_t dpdk_try_send_single_packet(uint16_t port_id, uint16_t queue_id, struct rte_mbuf* pkt);
+	int rte_vect_set_max_simd_bitwidth(uint16_t bitwidth);
 
 	// stats
 	uint32_t dpdk_get_rte_queue_stat_cntrs_num();
