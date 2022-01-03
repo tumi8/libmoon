@@ -111,7 +111,14 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 			spec = ffi.new("struct rte_flow_item_raw", {
 				relative = 0,
 				search = 0,
-				reserved = 0,
+
+				-- the value of the reserved flag is used by the modified
+				-- DPDK ice driver to switch between the modified flex byte filter
+				-- and the generic flow offloading implemented by the unmodified
+				-- DPDK driver (which is currently not working in moongen)
+				-- (reserverd=1 => modified, reserverd=0 => default)
+				reserved = 1,
+
 				offset = 42,
 				limit = 0,
 				length = 2,
