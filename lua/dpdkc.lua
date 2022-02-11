@@ -430,6 +430,8 @@ ffi.cdef[[
 	// ice bw limiting
 	void ice_set_q_bw_limit(int port, int queue, uint32_t bw);
 	void ice_set_bw_limit(int port, uint32_t bw);
+	void ice_tx_sched_set_pps_queue(int port, int queue, bool pps);
+	void ice_tx_sched_set_pps_port(int port, bool pps);
 
 	// statistics
 	void rte_eth_stats_get(uint8_t port, struct rte_eth_stats* stats);

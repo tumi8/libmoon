@@ -23,12 +23,17 @@ function dev:setRate(rate, pktSize)
 	local bwLimit = rate
 
 	-- The rate, which is printed by the stats task does not match the rate, which is set in the rate limiting function.
-	-- Therfore we added a correction function, which changes the set rate based on the packet size
+	-- Therfore we use rate limting based on packet rate, if the packet size is known
 	if pktSize ~= nil then
-		bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
+		dpdkc.ice_tx_sched_set_pps_port(self.id, true)
+		bwLimit =  ((bwLimit * 1e6) / (pktSize*8)) * 1000 * 2 / 1024
+		-- rounding in lua copied from http://lua-users.org/wiki/SimpleRound
+		dpdkc.ice_set_bw_limit(self.id, math.floor(bwLimit+0.5))
+	else
+		dpdkc.ice_tx_sched_set_pps_port(self.id, false)
+		-- rounding in lua copied from http://lua-users.org/wiki/SimpleRound
+		dpdkc.ice_set_bw_limit(self.id, math.floor(1000*bwLimit+0.5))
 	end
-	dpdkc.ice_set_bw_limit(self.id, tonumber(bwLimit))
-	
 end
 
 -- remove previous filters and add new filter to direct L2 PTP packets to the specified queue

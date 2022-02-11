@@ -32,7 +32,7 @@ void ice_set_q_bw_limit(int port, int queue, uint32_t bw){
 	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
 	pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
 
-	status = ice_cfg_q_bw_lmt(hw->port_info, pf->main_vsi->idx, 0, queue, ICE_MAX_BW, bw * 1000);
+	status = ice_cfg_q_bw_lmt(hw->port_info, pf->main_vsi->idx, 0, queue, ICE_MAX_BW, bw);
 
 	if(status != ICE_SUCCESS){
 		printf("Could not set max bandwidth limit for queue %d!\n", queue);
@@ -48,7 +48,7 @@ void ice_set_bw_limit(int port, uint32_t bw){
 	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
 	pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
 
-	status = ice_cfg_vsi_bw_lmt_per_tc(hw->port_info, pf->main_vsi->idx, 0, ICE_MAX_BW, bw * 1000);
+	status = ice_cfg_vsi_bw_lmt_per_tc(hw->port_info, pf->main_vsi->idx, 0, ICE_MAX_BW, bw);
 
 	if(status != ICE_SUCCESS){
 		printf("Could not set max bandwidth limit for port %d!\n", port);
