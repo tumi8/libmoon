@@ -30,6 +30,7 @@ SET(FILES
 	src/timestamping_i40e
 	src/timestamping_ixgbe
 	src/timestamping_igb
+	src/tx_scheduler_ice
 	src/bytesizedring
 	src/pktsizedring
 )

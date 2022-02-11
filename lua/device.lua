@@ -758,13 +758,19 @@ end
 function txQueue:setRate(rate, pktSize)
 	-- dpdk does not implement per queue rate limiting for e810 cards, so use a custom implementation
 	if(self.dev.customRateLimitPerQueue) then
+		-- Special implementation for E810 NICs
 		-- The rate, which is printed by the stats task does not match the rate, which is set in the rate limiting function.
-		-- Therfore we added a correction function
+		-- Therfore we use packet rate based limting when the packet size is known
 		local bwLimit = rate
 		if pktSize ~= nil then
-			bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
+			dpdkc.ice_tx_sched_set_pps_queue(self.dev.id, self.qid, true)
+			bwLimit =  ((bwLimit * 1e6) / (pktSize*8)) * 2 * 1000 / 1024
+			dpdkc.ice_set_q_bw_limit(self.dev.id, self.qid, math.floor(bwLimit+0.5))
+		else
+			dpdkc.ice_tx_sched_set_pps_queue(self.dev.id, self.qid, false)
+			-- rounding in lua copied from http://lua-users.org/wiki/SimpleRound
+			dpdkc.ice_set_q_bw_limit(self.dev.id, self.qid, math.floor(1000*tonumber(bwLimit)+0.5))
 		end
-		dpdkc.ice_set_q_bw_limit(self.dev.id, self.qid, tonumber(bwLimit))
 		return
 	end
 
