@@ -6,12 +6,34 @@ local dpdkc = require "dpdkc"
 local eth   = require "proto.ethernet"
 local log   = require "log"
 
+dev.e810_vf						= true
 dev.supportsFdir  				= true
 dev.useTimsyncIds 				= false
 dev.embeddedTimestampInPacket	= true
 dev.skipSync					= true
 
+dev.txStatsIgnoreCrc			= true
+-- dev.rxStatsIgnoreCrc			= true
+
 dev.timeRegisters = {0, 0, 0, 0}
+
+-- set global rate liming
+function dev:setRate(rate, pktSize)
+	if not dpdkc.iavf_modified_driver_detected(self.id) then
+		log:fatal("rate limiting for E810 VFs requires a modified version of the PF driver")
+	end
+
+	local bwLimit = rate
+
+	-- The rate, which is printed by the stats task does not match the rate, which is set in the rate limiting function.
+	-- Therfore we added a correction function
+	if pktSize ~= nil then
+		bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
+		dpdkc.iavf_config_rate_limit_port(self.id, 1000*tonumber(bwLimit))
+	else
+		dpdkc.iavf_config_rate_limit_port(self.id, 1000*tonumber(bwLimit))
+	end
+end
 
 -- timestamps are automatically enabled for all RX and TX queues,
 -- when using the modified version of the ice driver

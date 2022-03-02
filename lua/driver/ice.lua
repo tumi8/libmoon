@@ -13,6 +13,9 @@ dev.embeddedTimestampInPacket	= true
 dev.customRateLimitPerQueue		= true
 dev.skipSync					= true
 
+dev.txStatsIgnoreCrc			= true
+dev.rxStatsIgnoreCrc			= true
+
 -- overhead per packet and maximum packet rate for use with crc rate limiting
 dev.packetOverhead				= 24 --byte
 dev.maxPacketRate				= 30 --Mpps
@@ -26,7 +29,7 @@ function dev:setRate(rate, pktSize)
 	-- Therfore we use rate limting based on packet rate, if the packet size is known
 	if pktSize ~= nil then
 		dpdkc.ice_tx_sched_set_pps_port(self.id, true)
-		bwLimit =  ((bwLimit * 1e6) / (pktSize*8)) * 1000 * 2 / 1024
+		bwLimit =  ((bwLimit * 1e6) / ((pktSize+4)*8)) * 1000 * 2 / 1024
 		-- rounding in lua copied from http://lua-users.org/wiki/SimpleRound
 		dpdkc.ice_set_bw_limit(self.id, math.floor(bwLimit+0.5))
 	else

@@ -764,12 +764,31 @@ function txQueue:setRate(rate, pktSize)
 		local bwLimit = rate
 		if pktSize ~= nil then
 			dpdkc.ice_tx_sched_set_pps_queue(self.dev.id, self.qid, true)
-			bwLimit =  ((bwLimit * 1e6) / (pktSize*8)) * 2 * 1000 / 1024
+			bwLimit =  ((bwLimit * 1e6) / ((pktSize+4)*8)) * 2 * 1000 / 1024
 			dpdkc.ice_set_q_bw_limit(self.dev.id, self.qid, math.floor(bwLimit+0.5))
 		else
 			dpdkc.ice_tx_sched_set_pps_queue(self.dev.id, self.qid, false)
 			-- rounding in lua copied from http://lua-users.org/wiki/SimpleRound
 			dpdkc.ice_set_q_bw_limit(self.dev.id, self.qid, math.floor(1000*tonumber(bwLimit)+0.5))
+		end
+		return
+
+	-- dpdk does not implement per queue rate limiting for e810 VFs, so use a custom implementation
+	elseif(self.dev.e810_vf) then
+		if not dpdkc.iavf_modified_driver_detected(self.id) then
+			log:fatal("rate limiting for E810 VFs requires a modified version of the PF driver")
+		end
+		
+		local bwLimit = rate
+
+		-- The rate, which is printed by the stats task does not match the rate, which is set in the rate limiting function.
+		-- Therfore we added a correction function
+		if pktSize ~= nil then
+			bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
+			dpdkc.iavf_config_rate_limit_queue(self.dev.id, self.qid, 1000*tonumber(bwLimit))
+		else
+			print(1000*tonumber(bwLimit))
+			dpdkc.iavf_config_rate_limit_queue(self.dev.id, self.qid, 1000*tonumber(bwLimit))
 		end
 		return
 	end

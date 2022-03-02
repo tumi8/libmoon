@@ -433,6 +433,10 @@ ffi.cdef[[
 	void ice_tx_sched_set_pps_queue(int port, int queue, bool pps);
 	void ice_tx_sched_set_pps_port(int port, bool pps);
 
+	// iavf e810 VF bw limiting
+	void iavf_config_rate_limit_port(int port, uint64_t bw);
+	void iavf_config_rate_limit_queue(int port, int queue, uint64_t bw);
+
 	// statistics
 	void rte_eth_stats_get(uint8_t port, struct rte_eth_stats* stats);
 ]]
