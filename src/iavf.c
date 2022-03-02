@@ -8,6 +8,22 @@ uint64_t iavf_tx_timestamp_read_raw(int port){
     return iavf_get_ieee1588_tmst(adapter);
 }
 
+void iavf_config_rate_limit_port(int port, uint64_t bw){
+	struct iavf_adapter *adapter = IAVF_DEV_PRIVATE_TO_ADAPTER(rte_eth_devices[port].data->dev_private);
+	enum iavf_status ret = iavf_config_bw_limit_port(adapter, bw);
+	if(ret!=IAVF_SUCCESS){
+		printf("Could not set max bandwidth limit for port %d!\n", port);
+	}
+}
+
+void iavf_config_rate_limit_queue(int port, int queue, uint64_t bw){
+	struct iavf_adapter *adapter = IAVF_DEV_PRIVATE_TO_ADAPTER(rte_eth_devices[port].data->dev_private);
+	enum iavf_status ret = iavf_config_bw_limit_queue(adapter, queue, bw);
+	if(ret!=IAVF_SUCCESS){
+		printf("Could not set max bandwidth limit for port %d and queue %d!\n", port, queue);
+	}
+}
+
 bool iavf_modified_driver_detected(int port){
 	struct iavf_adapter *adapter = IAVF_DEV_PRIVATE_TO_ADAPTER(rte_eth_devices[port].data->dev_private);
 	//if the modified DPDK driver could not request the VF ID using 
