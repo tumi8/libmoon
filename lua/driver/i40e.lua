@@ -94,7 +94,7 @@ local function readCtr48(id, addr, last)
 end
 
 function dev:getRxStats()
-	local port = dpdkc.dpdk_get_pci_function(self.id)
+	local port = dpdkc.dpdk_get_i40e_hw_port(self.id)
 	-- unicast, multicast, and broadcast packets
 	self.uprc = readCtr32(self.id, GLPRT_UPRCL[port], self.uprc)
 	self.mprc = readCtr32(self.id, GLPRT_MPRCL[port], self.mprc)
@@ -115,7 +115,7 @@ function dev:init()
 	-- the datasheet claims that the register can be cleared by writing 1s into them
 	-- but that doesn't work on any of my XL710-based NICs...
 	-- rte_eth_stats_reset also doesn't do anything
-	local port = dpdkc.dpdk_get_pci_function(self.id)
+	local port = dpdkc.dpdk_get_i40e_hw_port(self.id)
 	self.initPkts = readCtr32(self.id, GLPRT_UPRCL[port], 0)
 	              + readCtr32(self.id, GLPRT_MPRCL[port], 0)
 	              + readCtr32(self.id, GLPRT_BPRCL[port], 0)

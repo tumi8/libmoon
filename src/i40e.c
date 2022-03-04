@@ -17,6 +17,11 @@ void* dpdk_get_i40e_dev(int port) {
 	return I40E_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
 }
 
+int dpdk_get_i40e_hw_port(int port) {
+	struct i40e_hw* hw = I40E_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
+	return hw->port;
+}
+
 int dpdk_get_i40e_vsi_seid(int port) {
 	return I40E_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private)->main_vsi->seid;
 }
