@@ -359,6 +359,7 @@ ffi.cdef[[
 	uint8_t dpdk_get_socket(uint8_t port);
 	void* dpdk_get_eth_dev(int port);
 	void* dpdk_get_i40e_dev(int port);
+	int dpdk_get_i40e_hw_port(int port);
 	int dpdk_get_i40e_vsi_seid(int port);
 	void* dpdk_get_ice_dev(int port);
 	void* dpdk_get_ice_dev_hw_addr(int port);
