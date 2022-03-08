@@ -23,19 +23,24 @@ function dev:setRate(rate, pktSize)
 	end
 
 	local bwLimit = rate
-
+	
 	-- The rate, which is printed by the stats task does not match the rate, which is set in the rate limiting function.
 	-- Therfore we added a correction function
 	if pktSize ~= nil then
 		local bwLimitPPS = ((bwLimit * 1e6) / ((pktSize+4)*8)) * 2 * 1000 / 1024
-		if (dpdkc.iavf_config_rate_limit_port(self.id,  math.floor(bwLimit+0.5), true) != 0) then
+		if (dpdkc.iavf_config_rate_limit_port(self.id,  math.floor(bwLimit+0.5), true) ~= 0) then
+			log:warn("Could not set rate limit base on PPS. Trying bandwidth based rate limiting instead!")
 			-- try using rate limiting based on bandwidth instead of pps, in case a rate limiting
 			-- was set by the PF (and PPS rate limiting is therfore not possible)
 			local bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
-			dpdkc.iavf_config_rate_limit_port(self.id,  1000*tonumber(bwLimit), false)
+			if(dpdkc.iavf_config_rate_limit_port(self.id,  1000*tonumber(bwLimit), false) ~= 0) then
+				log:warn("Could not set bw limit on port!")
+			end
 		end	
 	else
-		dpdkc.iavf_config_rate_limit_port(self.id, 1000*tonumber(bwLimit), false)
+		if(dpdkc.iavf_config_rate_limit_port(self.id, 1000*tonumber(bwLimit), false) ~= 0) then
+			log:warn("Could not set bw limit on port!")
+		end
 	end
 end
 

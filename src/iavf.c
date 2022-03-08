@@ -12,7 +12,6 @@ int iavf_config_rate_limit_port(int port, uint64_t bw, bool pps){
 	struct iavf_adapter *adapter = IAVF_DEV_PRIVATE_TO_ADAPTER(rte_eth_devices[port].data->dev_private);
 	enum iavf_status ret = iavf_config_bw_limit_port(adapter, bw, pps);
 	if(ret!=IAVF_SUCCESS){
-		printf("Could not set max bandwidth limit for port %d!\n", port);
 		return -1;
 	}
 	return 0;
