@@ -784,11 +784,10 @@ function txQueue:setRate(rate, pktSize)
 		-- The rate, which is printed by the stats task does not match the rate, which is set in the rate limiting function.
 		-- Therfore we added a correction function
 		if pktSize ~= nil then
-			bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
-			dpdkc.iavf_config_rate_limit_queue(self.dev.id, self.qid, 1000*tonumber(bwLimit))
+			bwLimit =  ((bwLimit * 1e6) / ((pktSize+4)*8)) * 2 * 1000 / 1024
+			dpdkc.iavf_config_rate_limit_queue(self.dev.id, self.qid, math.floor(bwLimit+0.5), true)
 		else
-			print(1000*tonumber(bwLimit))
-			dpdkc.iavf_config_rate_limit_queue(self.dev.id, self.qid, 1000*tonumber(bwLimit))
+			dpdkc.iavf_config_rate_limit_queue(self.dev.id, self.qid, 1000*tonumber(bwLimit), false)
 		end
 		return
 	end

@@ -13,7 +13,6 @@ dev.embeddedTimestampInPacket	= true
 dev.skipSync					= true
 
 dev.txStatsIgnoreCrc			= true
--- dev.rxStatsIgnoreCrc			= true
 
 dev.timeRegisters = {0, 0, 0, 0}
 
@@ -28,10 +27,15 @@ function dev:setRate(rate, pktSize)
 	-- The rate, which is printed by the stats task does not match the rate, which is set in the rate limiting function.
 	-- Therfore we added a correction function
 	if pktSize ~= nil then
-		bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
-		dpdkc.iavf_config_rate_limit_port(self.id, 1000*tonumber(bwLimit))
+		local bwLimitPPS = ((bwLimit * 1e6) / ((pktSize+4)*8)) * 2 * 1000 / 1024
+		if (dpdkc.iavf_config_rate_limit_port(self.id,  math.floor(bwLimit+0.5), true) != 0) then
+			-- try using rate limiting based on bandwidth instead of pps, in case a rate limiting
+			-- was set by the PF (and PPS rate limiting is therfore not possible)
+			local bwLimit = (((pktSize+3.8)/pktSize)-0.045)*rate
+			dpdkc.iavf_config_rate_limit_port(self.id,  1000*tonumber(bwLimit), false)
+		end	
 	else
-		dpdkc.iavf_config_rate_limit_port(self.id, 1000*tonumber(bwLimit))
+		dpdkc.iavf_config_rate_limit_port(self.id, 1000*tonumber(bwLimit), false)
 	end
 end
 
