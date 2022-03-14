@@ -339,8 +339,8 @@ function etherHeader:fill(args, pre)
 
 	local src = pre .. "Src"
 	local dst = pre .. "Dst"
-	args[src] = args[src] or "01:02:03:04:05:06"
-	args[dst] = args[dst] or "07:08:09:0a:0b:0c"
+	args[src] = args[src] or "02:03:04:05:06:07"
+	args[dst] = args[dst] or "08:09:0a:0b:0c:0d"
 	
 	-- addresses can be either a string, a mac_address ctype or a device/queue object
 	if type(args[src]) == "string" then
