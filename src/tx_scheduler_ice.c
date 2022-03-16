@@ -244,133 +244,98 @@ ice_sched_get_node_by_id_type(struct ice_port_info *pi, u32 id,
 
 // end of copied code from ice_sched.c
 
-enum ice_status ice_get_port_tx_scheduler_elem(int port, struct ice_aqc_txsched_elem_data* buf, struct ice_sched_node **node){
+void ice_tx_sched_set_pps_port(int port, bool pps){
+	printf("pps: %d\n", pps);
 	struct ice_hw *hw;
 	struct ice_pf *pf;
-	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
-	pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
-
-	struct ice_port_info *pi = hw->port_info;
-
-	// start of copied and modified code from "ice_sched_set_node_bw_lmt_per_tc" in ice_sched.c
+	struct ice_port_info *pi;
+	struct ice_aqc_txsched_elem_data buf;
 	enum ice_status status = ICE_ERR_PARAM;
 
-	if (!pi)
-		return status;
+	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
+	pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
+	pi = hw->port_info;
+
+	// start of copied and modified code from "ice_sched_set_node_bw_lmt_per_tc" in ice_sched.c
+	struct ice_sched_node *node;
+
+	if (!pi){
+		printf("ice: could not set PPS scheduling on device %d!\n", port);
+		return;
+	}
 
 	ice_acquire_lock(&pi->sched_lock);
-	(*node) = ice_sched_get_node_by_id_type(pi, pf->main_vsi->idx, ICE_AGG_TYPE_VSI, 0);
-	if (!(*node)) {
+	node = ice_sched_get_node_by_id_type(pi, pf->main_vsi->idx, ICE_AGG_TYPE_VSI, 0);
+	if (!node) {
 		ice_debug(pi->hw, ICE_DBG_SCHED, "Wrong id, agg type, or tc\n");
 		goto exit_set_node_bw_lmt_per_tc;
 	}
 	
-	*buf = (*node)->info;
-	status = ICE_SUCCESS;
+	buf = node->info;
+
+	if(pps){
+		buf.data.generic |= ICE_AQC_ELEM_GENERIC_MODE_M;
+	}else{
+		buf.data.generic &= ~(ICE_AQC_ELEM_GENERIC_MODE_M);
+	}
+
+	status = ice_sched_update_elem(pi->hw, node, &buf);
 
 exit_set_node_bw_lmt_per_tc:
 	ice_release_lock(&pi->sched_lock);
-	return status;
 	// end of copied and modified code from "ice_sched_set_node_bw_lmt_per_tc" in ice_sched.c
-} 
+	if(status!=0){
+		printf("ice: could not set PPS scheduling on device %d!\n", port);
+	}
+}
 
-enum ice_status ice_get_queue_tx_scheduler_elem(int port, int queue, struct ice_aqc_txsched_elem_data* buf, struct ice_sched_node **node){
+void ice_tx_sched_set_pps_queue(int port, int queue, bool pps){
 	struct ice_hw *hw;
 	struct ice_pf *pf;
+	struct ice_port_info *pi;
+	struct ice_aqc_txsched_elem_data buf;
+	enum ice_status status = ICE_ERR_PARAM;
+
 	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
 	pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
-
-	struct ice_port_info *pi = hw->port_info;
-
+	pi = hw->port_info;
+	
 	// start of copied and modified code from "ice_sched_set_q_bw_lmt" in ice_sched.c
-	enum ice_status status = ICE_ERR_PARAM;
+	struct ice_sched_node *node;
 	struct ice_q_ctx *q_ctx;
 
-	if (!ice_is_vsi_valid(pi->hw, pf->main_vsi->idx))
-		return ICE_ERR_PARAM;
+	if (!ice_is_vsi_valid(pi->hw, pf->main_vsi->idx)){
+		printf("ice: could not set PPS scheduling on device %d for queue %d!\n", port, queue);
+		return;
+	}
 	ice_acquire_lock(&pi->sched_lock);
 	q_ctx = ice_get_lan_q_ctx(pi->hw, pf->main_vsi->idx, 0, queue);
 	if (!q_ctx)
 		goto exit_q_bw_lmt;
-	*node = ice_sched_find_node_by_teid(pi->root, q_ctx->q_teid);
-	if (!(*node)) {
+	node = ice_sched_find_node_by_teid(pi->root, q_ctx->q_teid);
+	if (!node) {
 		ice_debug(pi->hw, ICE_DBG_SCHED, "Wrong q_teid\n");
 		goto exit_q_bw_lmt;
 	}
 
 	/* Return error if it is not a leaf node */
-	if ((*node)->info.data.elem_type != ICE_AQC_ELEM_TYPE_LEAF)
+	if (node->info.data.elem_type != ICE_AQC_ELEM_TYPE_LEAF)
 		goto exit_q_bw_lmt;
 
-	*buf = (*node)->info;
-	status = ICE_SUCCESS;
+	buf = node->info;
+
+	if(pps){
+		buf.data.generic |= ICE_AQC_ELEM_GENERIC_MODE_M;
+	}else{
+		buf.data.generic &= ~(ICE_AQC_ELEM_GENERIC_MODE_M);
+	}
+
+	status = ice_sched_update_elem(pi->hw, node, &buf);
 
 exit_q_bw_lmt:
 	ice_release_lock(&pi->sched_lock);
-	return status;
 	// end of copied and modified code from "ice_sched_set_q_bw_lmt" in ice_sched.c
-} 
-
-void ice_tx_sched_set_pps_port(int port, bool pps){
-	enum ice_status status;
-	struct ice_aqc_txsched_elem_data buf;
-	struct ice_aqc_txsched_elem *data;
-	struct ice_sched_node *node;
-	struct ice_hw *hw;
-
-	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
-
-	status = ice_get_port_tx_scheduler_elem(port, &buf, &node);
-
-	if(status!=0){
-		printf("ice: could not set PPS scheduling on device %d!\n", port);
-		return;
-	}
-
-	data = &buf.data;
-
-	if(pps){
-		data->generic |= ICE_AQC_ELEM_GENERIC_MODE_M;
-	}else{
-		data->generic &= ~(ICE_AQC_ELEM_GENERIC_MODE_M);
-	}
-	
-	status = ice_sched_update_elem(hw, node, &buf);
-
-	if(status!=0){
-		printf("ice: could not set PPS scheduling on device %d!\n", port);
-		return;
-	}
-}
-
-void ice_tx_sched_set_pps_queue(int port, int queue, bool pps){
-	enum ice_status status;
-	struct ice_aqc_txsched_elem_data buf;
-	struct ice_aqc_txsched_elem *data;
-	struct ice_sched_node *node;
-	struct ice_hw *hw;
-
-	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
-
-	status = ice_get_queue_tx_scheduler_elem(port, queue, &buf, &node);
-
 	if(status!=0){
 		printf("ice: could not set PPS scheduling on device %d for queue %d!\n", port, queue);
-		return;
-	}
-
-	data = &buf.data;
-
-	if(pps){
-		data->generic |= ICE_AQC_ELEM_GENERIC_MODE_M;
-	}else{
-		data->generic &= ~(ICE_AQC_ELEM_GENERIC_MODE_M);
-	}
-	
-	status = ice_sched_update_elem(hw, node, &buf);
-
-	if(status!=0){
-		printf("ice: could not set PPS scheduling on device %d for queue %d!\n", port, queue);
-		return;
 	}
 }
