@@ -5,7 +5,7 @@
 #include <rte_time.h>
 #endif
 
-static void libmoon_reset_timecounter(struct rte_timecounter* tc) {
+static inline void libmoon_reset_timecounter(struct rte_timecounter* tc) {
 	tc->nsec = 0;
 	tc->nsec_frac = 0;
 	tc->cycle_last = 0;

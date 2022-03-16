@@ -1,7 +1,14 @@
 
 #include <rte_config.h>
 #include <rte_ethdev.h>
+
+// Ignore deprecation warnings. These are caused by ixgbe_ethdev.h, which includes the rte_security.h header.
+// This header uses experimental features, which are not used in Moongen. Because of this, these warnings can be ignored.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 #include <ixgbe_ethdev.h>
+#pragma GCC diagnostic pop
+
 
 #define NO_INCLUDE_RTE_TIME
 #include "timestamping.h"
