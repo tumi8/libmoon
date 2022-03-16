@@ -21,9 +21,26 @@ int ring_enqueue(struct rte_ring* r, void* const* obj, int n) {
 	return rte_ring_sp_enqueue_bulk(r, obj, n, NULL);
 }
 
-int ring_dequeue(struct rte_ring* r, void** obj, int n) {
-	return rte_ring_sc_dequeue_bulk(r, obj, n, NULL);
+int my_ring_sc_dequeue(struct rte_ring* r, void** obj_p) {
+  return rte_ring_sc_dequeue(r, obj_p);
 }
+
+unsigned int my_ring_sc_dequeue_bulk(struct rte_ring* r, void** obj_p, unsigned int n, unsigned int* available) {
+  return rte_ring_sc_dequeue_bulk(r, obj_p, n, available);
+}
+
+int my_ring_sp_enqueue(struct rte_ring* r, void* obj) {
+  return rte_ring_sp_enqueue(r, obj);
+}
+
+int ring_dequeue(struct rte_ring* r, void** obj, int n) {
+      return rte_ring_sc_dequeue_bulk(r, obj, n, NULL);
+}
+
+int ring_dequeue_single(struct rte_ring* r, void** obj) {
+      return rte_ring_sc_dequeue(r, obj);
+}
+
 
 int ring_count(struct rte_ring* r) {
 	return rte_ring_count(r);

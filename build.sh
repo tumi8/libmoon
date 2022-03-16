@@ -1,4 +1,5 @@
 #!/bin/bash
+set -eo pipefail
 
 #FLAGS is filled with arguments for bind-interfaces.sh
 FLAGS=""

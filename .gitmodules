@@ -5,9 +5,9 @@
 	branch = v2.1
 [submodule "deps/dpdk"]
 	path = deps/dpdk
-	url = https://github.com/emmericp/dpdk
+	url = https://github.com/holzingk/dpdk
 	ignore = untracked
-	branch = v17.08
+	branch = nextl00p
 [submodule "deps/pciids"]
 	path = deps/pciids
 	url = https://github.com/emmericp/pciids

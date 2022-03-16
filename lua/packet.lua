@@ -58,13 +58,31 @@ function pkt:dumpFlags()
 	log:debug(tostring(self.ol_flags) .. " " .. tostring(self.tx_offload))
 end
 
+function pkt:getSoftwareTimestamp()
+   return tonumber(self.timestamp)
+end
+
+function pkt:getHardwareTimestamp()
+   local data = ffi.cast("uint32_t* ", self:getData())
+   local low, high
+   -- ixgbe-style nics that support this (i.e. x550)
+   --local timestamp = ffi.cast("uint32_t*", ffi.cast("uint8_t*", self + self.data_off + self.pkt_len - 8))
+   local timestamp = ffi.cast("uint32_t*", ffi.cast("uint8_t*", self:getData()) + self:getSize() - 8)
+   low = timestamp[0]
+   high = timestamp[1]
+   --local ret = ffi.new("uint64_t", 0)
+   --ret = high * 10^9 + low
+   return high * 10^9 + low
+   --return ret
+end
+
 --- Retrieve the time stamp information.
 --- @return The timestamp or nil if the packet was not time stamped.
-function pkt:getTimestamp(dev)
+function pkt:getTimestamp(useHardwareTimestamps)
 	if bit.bor(self.ol_flags, dpdk.PKT_RX_IEEE1588_TMST) ~= 0 then
 		local data = ffi.cast("uint32_t* ", self:getData())
 		local low, high
-		if dev and dev.embeddedTimestampAtEndOfBuffer then
+		if useHardwareTimestamps then
 			-- ixgbe-style nics that support this (i.e. x550)
 			local timestamp = ffi.cast("uint32_t*", ffi.cast("uint8_t*", self:getData()) + self:getSize() - 8)
 			low = timestamp[0]
@@ -149,6 +167,14 @@ end
 
 function pkt:free()
 	dpdkc.rte_pktmbuf_free_export(self)
+end
+
+function pkt:removeFirst(bytes)
+	dpdkc.rte_pktmbuf_adj_export(self, bytes)
+end
+
+function pkt:removeLast(bytes)
+	dpdkc.rte_pktmbuf_trim_export(self, bytes)
 end
 
 -------------------------------------------------------------------------------------------------------

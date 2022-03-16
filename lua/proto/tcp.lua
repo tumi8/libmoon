@@ -625,8 +625,8 @@ end
 
 function tcpHeader:getMssOption(offset)
 	local dat 
-	if type(offset) == number then
-		dat = { self.option[offset + 2], self.option[offset + 3] }
+	if type(offset) == "number" then
+		dat = { self.options[offset + 2], self.options[offset + 3] }
 	else
 		dat = offset['byte']
 	end
