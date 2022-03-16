@@ -245,7 +245,6 @@ ice_sched_get_node_by_id_type(struct ice_port_info *pi, u32 id,
 // end of copied code from ice_sched.c
 
 void ice_tx_sched_set_pps_port(int port, bool pps){
-	printf("pps: %d\n", pps);
 	struct ice_hw *hw;
 	struct ice_pf *pf;
 	struct ice_port_info *pi;
