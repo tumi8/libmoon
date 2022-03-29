@@ -776,7 +776,8 @@ function txQueue:setRate(rate, pktSize)
 	-- dpdk does not implement per queue rate limiting for e810 VFs, so use a custom implementation
 	elseif(self.dev.e810_vf) then
 		if not dpdkc.iavf_modified_driver_detected(self.id) then
-			log:fatal("rate limiting for E810 VFs requires a modified version of the PF driver")
+			log:warn("rate limiting for E810 VFs requires a modified version of the PF driver and is not supported on X700 VFs")
+			return
 		end
 		
 		local bwLimit = rate

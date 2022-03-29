@@ -19,7 +19,8 @@ dev.timeRegisters = {0, 0, 0, 0}
 -- set global rate liming
 function dev:setRate(rate, pktSize)
 	if not dpdkc.iavf_modified_driver_detected(self.id) then
-		log:fatal("rate limiting for E810 VFs requires a modified version of the PF driver")
+		log:warn("rate limiting for E810 VFs requires a modified version of the PF driver and is not supported on X700 VFs")
+		return
 	end
 
 	local bwLimit = rate
@@ -48,13 +49,13 @@ end
 -- when using the modified version of the ice driver
 function dev:enableRxTimestamps(self, udpPort)
 	if not dpdkc.iavf_modified_driver_detected(self.id) then
-		log:fatal("rx timestamping for E810 VFs requires a modified version of the PF driver")
+		log:fatal("rx timestamping for E810 VFs requires a modified version of the PF driver and is not supported on X700 VFs")
 	end
 end
 
 function dev:enableRxTimestampsAllPackets()
 	if not dpdkc.iavf_modified_driver_detected(self.id) then
-		log:fatal("rx timestamping for E810 VFs requires a modified version of the PF driver")
+		log:fatal("rx timestamping for E810 VFs requires a modified version of the PF driver and is not supported on X700 VFs")
 	end
 end
 
@@ -67,7 +68,7 @@ function dev:hasRxTimestamp() return 1 end
 
 function dev:enableTxTimestamps(queue)
 	if not dpdkc.iavf_modified_driver_detected(self.id) then
-		log:fatal("tx timestamping for E810 VFs requires a modified version of the PF driver")
+		log:fatal("tx timestamping for E810 VFs requires a modified version of the PF driver and is not supported on X700 VFs")
 	end
 	self.tx_prev_ts = ffi.new("uint64_t[1]")
 	self.tx_prev_ts[0] = 0
