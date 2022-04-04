@@ -10,6 +10,12 @@
 #include <ice_rxtx.h>
 #include <ice_ptp_hw.h>
 
+void ice_take_timer_ownership(int port){
+	struct ice_hw *hw;
+	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
+	hw->func_caps.ts_func_info.src_tmr_owned = true;
+}
+
 void ice_reset_timer(int port){
 	struct ice_hw *hw;
 	enum ice_status status;

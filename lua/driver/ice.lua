@@ -51,18 +51,21 @@ end
 
 -- initalize the PTP hardware (same as for single packets in dev:enableRxTimestamps)
 function dev:enableRxTimestampsAllPackets()
+	dpdkc.ice_take_timer_ownership(self.id)
 	dpdkc.rte_eth_timesync_enable(self.id)
 	self:resetTimeCounters()
 end
 
 -- initalize the PTP hardware 
 function dev:enableRxTimestamps(queue, udpPort)
+	dpdkc.ice_take_timer_ownership(self.id)
 	dpdkc.rte_eth_timesync_enable(self.id)
 	self:resetTimeCounters()
 end
 
 -- initalize the PTP hardware and initialize variables for handling TX timestamp overflow
 function dev:enableTxTimestamps(queue)
+	dpdkc.ice_take_timer_ownership(self.id)
 	dpdkc.rte_eth_timesync_enable(self.id)
 	self:resetTimeCounters()
 end
