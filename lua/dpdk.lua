@@ -207,7 +207,7 @@ function mod.init()
 	if cfg.pciWhitelist then
 		if type(cfg.pciWhitelist) == "table" then
 			for i, v in ipairs(cfg.pciWhitelist) do
-				argv[#argv + 1] = "-w" .. v
+				argv[#argv + 1] = "-a" .. v
 			end
 		else
 			log:warn("Need a list for the PCI white list")
