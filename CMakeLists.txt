@@ -64,6 +64,7 @@ SET(ALL_LIBS
 INCLUDE_DIRECTORIES(
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/x86_64-native-linux-gcc/include
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/lib/ethdev
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/lib/eal/include
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/bnxt
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ixgbe/base
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ixgbe
@@ -75,6 +76,7 @@ INCLUDE_DIRECTORIES(
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ice
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/e1000
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/e1000/base
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/bus/pci
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/luajit/src
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/highwayhash/highwayhash
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/tbb/include

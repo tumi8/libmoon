@@ -10,6 +10,7 @@
 #include <rte_eth_ctrl.h>
 #include <rte_pci.h>
 #include <rte_bus_pci.h>
+#include <bus_pci_driver.h>
 
 #include "rdtsc.h"
 
@@ -68,54 +69,9 @@ struct libmoon_device_config {
 
 int dpdk_configure_device(struct libmoon_device_config* cfg) {
 	const char* driver = dpdk_get_driver_name(cfg->port);
-	bool is_i40e_device = strcmp("net_i40e", driver) == 0;
 	bool is_iavf_device = strcmp("net_iavf", driver) == 0;
 	struct rte_eth_dev_info dev_info;
 	rte_eth_dev_info_get(cfg->port, &dev_info);
-	// TODO: make fdir configurable
-	struct rte_fdir_conf fdir_conf = {
-		.mode = RTE_FDIR_MODE_PERFECT,
-		.pballoc = RTE_FDIR_PBALLOC_64K,
-		.status = RTE_FDIR_REPORT_STATUS,
-		.mask = {
-			.vlan_tci_mask = 0x0,
-			.ipv4_mask = {
-				.src_ip = 0,
-				.dst_ip = 0,
-			},
-			.ipv6_mask = {
-				.src_ip = {0,0,0,0},
-				.dst_ip = {0,0,0,0},
-			},
-			.src_port_mask = 0,
-			.dst_port_mask = 0,
-			.mac_addr_byte_mask = 0,
-			.tunnel_type_mask = 0,
-			.tunnel_id_mask = 0,
-		},
-		.flex_conf = {
-			.nb_payloads = 1,
-			.nb_flexmasks = 1,
-			.flex_set = {
-				[0] = {
-					.type = RTE_ETH_RAW_PAYLOAD,
-					// i40e requires to use all 16 values here, otherwise it just fails
-					.src_offset = { 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57 },
-				}
-			},
-			.flex_mask = {
-				[0] = {
-					// ixgbe *only* accepts RTE_ETH_FLOW_UNKNOWN, i40e accepts any value other than that
-					// other drivers don't really seem to care...
-					// WTF?
-					// any other value is apparently an error for this undocumented field
-					.flow_type = is_i40e_device ? RTE_ETH_FLOW_NONFRAG_IPV4_UDP : RTE_ETH_FLOW_UNKNOWN,
-					.mask = { [0] = 0xFF, [1] = 0xFF }
-				}
-			},
-		},
-		.drop_queue = 63,
-	};
 
 	struct rte_eth_rss_conf rss_conf = {
 		.rss_key = cfg->enable_rss_symm ? symm_rss_hash_key : NULL,
@@ -123,28 +79,26 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		.rss_hf = cfg->rss_mask & dev_info.flow_type_rss_offloads,
 	};
 	uint64_t rx_offloads = (cfg->disable_offloads ?
-		(DEV_RX_OFFLOAD_TIMESTAMP)
-		: (DEV_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? DEV_RX_OFFLOAD_VLAN_STRIP : 0) | DEV_RX_OFFLOAD_VLAN_EXTEND | DEV_RX_OFFLOAD_TIMESTAMP))
+		(RTE_ETH_RX_OFFLOAD_TIMESTAMP)
+		: (RTE_ETH_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? RTE_ETH_RX_OFFLOAD_VLAN_STRIP : 0) | RTE_ETH_RX_OFFLOAD_VLAN_EXTEND | RTE_ETH_RX_OFFLOAD_TIMESTAMP))
 		& dev_info.rx_offload_capa;
 	uint64_t tx_offloads = (cfg->disable_offloads ?
-		DEV_TX_OFFLOAD_MBUF_FAST_FREE
-		: (DEV_TX_OFFLOAD_VLAN_INSERT | DEV_TX_OFFLOAD_IPV4_CKSUM | DEV_TX_OFFLOAD_UDP_CKSUM | DEV_TX_OFFLOAD_TCP_CKSUM | DEV_TX_OFFLOAD_MBUF_FAST_FREE))
+		RTE_ETH_TX_OFFLOAD_MBUF_FAST_FREE
+		: (RTE_ETH_TX_OFFLOAD_VLAN_INSERT | RTE_ETH_TX_OFFLOAD_IPV4_CKSUM | RTE_ETH_TX_OFFLOAD_UDP_CKSUM | RTE_ETH_TX_OFFLOAD_TCP_CKSUM | RTE_ETH_TX_OFFLOAD_MBUF_FAST_FREE))
 		& dev_info.tx_offload_capa;
 	struct rte_eth_conf port_conf = {
 		.rxmode = {
-			.mq_mode = cfg->enable_rss ? ETH_MQ_RX_RSS : ETH_MQ_RX_NONE,
-			.split_hdr_size = 0,
-			.offloads = rx_offloads,
+			.mq_mode = cfg->enable_rss ? RTE_ETH_MQ_RX_RSS : RTE_ETH_MQ_RX_NONE,
+			.offloads = 0,
 
 			//subtract 4 byte for possibly transparently inserted vlan tag, when using VFs
-			.mtu = (dev_info.max_mtu) - (is_iavf_device?4:0),
+			.mtu = (1500) - (is_iavf_device?4:0),
 		},
 		.txmode = {
-			.mq_mode = ETH_MQ_TX_NONE,
-			.offloads = tx_offloads
+			.mq_mode = RTE_ETH_MQ_TX_NONE,
+			.offloads = 0
 		},
-		.fdir_conf = fdir_conf,
-		.link_speeds = ETH_LINK_SPEED_AUTONEG,
+		.link_speeds = RTE_ETH_LINK_SPEED_AUTONEG,
 	  	.rx_adv_conf = {
 			.rss_conf = rss_conf,
 		} 

@@ -241,49 +241,56 @@ ffi.cdef[[
 	};
 
 	struct rte_eth_dev_info {
-		void* device; /** Generic device information */
+		struct rte_device *device; /**< Generic device information */
 		const char *driver_name; /**< Device Driver name. */
 		unsigned int if_index; /**< Index to bound host interface, or 0 if none.
 			Use if_indextoname() to translate into an interface name. */
 		uint16_t min_mtu;	/**< Minimum MTU allowed */
 		uint16_t max_mtu;	/**< Maximum MTU allowed */
 		const uint32_t *dev_flags; /**< Device flags */
-		uint32_t min_rx_bufsize; /**< Minimum size of RX buffer. */
-		uint32_t max_rx_pktlen; /**< Maximum configurable length of RX pkt. */
+		uint32_t min_rx_bufsize; /**< Minimum size of Rx buffer. */
+		uint32_t max_rx_pktlen; /**< Maximum configurable length of Rx pkt. */
 		/** Maximum configurable size of LRO aggregated packet. */
 		uint32_t max_lro_pkt_size;
-		uint16_t max_rx_queues; /**< Maximum number of RX queues. */
-		uint16_t max_tx_queues; /**< Maximum number of TX queues. */
+		uint16_t max_rx_queues; /**< Maximum number of Rx queues. */
+		uint16_t max_tx_queues; /**< Maximum number of Tx queues. */
 		uint32_t max_mac_addrs; /**< Maximum number of MAC addresses. */
-		uint32_t max_hash_mac_addrs;
 		/** Maximum number of hash MAC addresses for MTA and UTA. */
+		uint32_t max_hash_mac_addrs;
 		uint16_t max_vfs; /**< Maximum number of VFs. */
 		uint16_t max_vmdq_pools; /**< Maximum number of VMDq pools. */
 		struct rte_eth_rxseg_capa rx_seg_capa; /**< Segmentation capability.*/
+		/** All Rx offload capabilities including all per-queue ones */
 		uint64_t rx_offload_capa;
-		/**< All RX offload capabilities including all per-queue ones */
+		/** All Tx offload capabilities including all per-queue ones */
 		uint64_t tx_offload_capa;
-		/**< All TX offload capabilities including all per-queue ones */
+		/** Device per-queue Rx offload capabilities. */
 		uint64_t rx_queue_offload_capa;
-		/**< Device per-queue RX offload capabilities. */
+		/** Device per-queue Tx offload capabilities. */
 		uint64_t tx_queue_offload_capa;
-		/**< Device per-queue TX offload capabilities. */
+		/** Device redirection table size, the total number of entries. */
 		uint16_t reta_size;
-		/**< Device redirection table size, the total number of entries. */
 		uint8_t hash_key_size; /**< Hash key size in bytes */
 		/** Bit mask of RSS offloads, the bit offset also means flow type */
 		uint64_t flow_type_rss_offloads;
-		struct rte_eth_rxconf default_rxconf; /**< Default RX configuration */
-		struct rte_eth_txconf default_txconf; /**< Default TX configuration */
-		uint16_t vmdq_queue_base; /**< First queue ID for VMDQ pools. */
-		uint16_t vmdq_queue_num;  /**< Queue number for VMDQ pools. */
-		uint16_t vmdq_pool_base;  /**< First ID of VMDQ pools. */
-		struct rte_eth_desc_lim rx_desc_lim;  /**< RX descriptors limits */
-		struct rte_eth_desc_lim tx_desc_lim;  /**< TX descriptors limits */
-		uint32_t speed_capa;  /**< Supported speeds bitmap (ETH_LINK_SPEED_). */
-		/** Configured number of rx/tx queues */
-		uint16_t nb_rx_queues; /**< Number of RX queues. */
-		uint16_t nb_tx_queues; /**< Number of TX queues. */
+		struct rte_eth_rxconf default_rxconf; /**< Default Rx configuration */
+		struct rte_eth_txconf default_txconf; /**< Default Tx configuration */
+		uint16_t vmdq_queue_base; /**< First queue ID for VMDq pools. */
+		uint16_t vmdq_queue_num;  /**< Queue number for VMDq pools. */
+		uint16_t vmdq_pool_base;  /**< First ID of VMDq pools. */
+		struct rte_eth_desc_lim rx_desc_lim;  /**< Rx descriptors limits */
+		struct rte_eth_desc_lim tx_desc_lim;  /**< Tx descriptors limits */
+		uint32_t speed_capa;  /**< Supported speeds bitmap (RTE_ETH_LINK_SPEED_). */
+		/** Configured number of Rx/Tx queues */
+		uint16_t nb_rx_queues; /**< Number of Rx queues. */
+		uint16_t nb_tx_queues; /**< Number of Tx queues. */
+		/**
+		 * Maximum number of Rx mempools supported per Rx queue.
+		 *
+		 * Value greater than 0 means that the driver supports Rx queue
+		 * mempools specification via rx_conf->rx_mempools.
+		 */
+		uint16_t max_rx_mempools;
 		/** Rx parameter recommendations */
 		struct rte_eth_dev_portconf default_rxportconf;
 		/** Tx parameter recommendations */
@@ -291,11 +298,13 @@ ffi.cdef[[
 		/** Generic device capabilities (RTE_ETH_DEV_CAPA_). */
 		uint64_t dev_capa;
 		/**
-			* Switching information for ports on a device with a
-			* embedded managed interconnect/switch.
-			*/
+		 * Switching information for ports on a device with a
+		 * embedded managed interconnect/switch.
+		 */
 		struct rte_eth_switch_info switch_info;
-
+		/** Supported error handling mode. */
+		enum rte_eth_err_handle_mode err_handle_mode;
+	
 		uint64_t reserved_64s[2]; /**< Reserved for future fields */
 		void *reserved_ptrs[2];   /**< Reserved for future fields */
 	};
