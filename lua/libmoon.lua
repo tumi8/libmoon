@@ -152,7 +152,7 @@ local function getCoreOnSocket(socket)
 	for i = 2, #mod.config.cores do -- skip master
 		local core = mod.config.cores[i]
 		local status = dpdkc.rte_eal_get_lcore_state(core)
-		if (status == dpdkc.FINISHED or status == dpdkc.WAIT)
+		if (status == dpdkc.WAIT)
 		and (socket == nil or dpdkc.rte_lcore_to_socket_id_export(core) == socket) then
 			return core
 		end
@@ -183,7 +183,7 @@ function mod.startSharedTask(...)
 	local maxCore = mod.config.cores[#mod.config.cores]
 	for core = maxCore + 1, maxCore + mod.config.numSharedCores do
 		local status = dpdkc.rte_eal_get_lcore_state(core)
-		if status == dpdkc.FINISHED or status == dpdkc.WAIT then
+		if status == dpdkc.WAIT then
 			return mod.startTaskOnCore(core, ...)
 		end
 	end
@@ -194,7 +194,7 @@ end
 function mod.startTaskOnCore(core, ...)
 	checkCore()
 	local status = dpdkc.rte_eal_get_lcore_state(core)
-	if status == dpdkc.FINISHED then
+	if status == dpdkc.WAIT then
 		dpdkc.rte_eal_wait_lcore(core)
 		-- should be guaranteed to be in WAIT state now according to DPDK documentation
 		status = dpdkc.rte_eal_get_lcore_state(core)

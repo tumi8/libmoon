@@ -89,14 +89,14 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 	struct rte_eth_conf port_conf = {
 		.rxmode = {
 			.mq_mode = cfg->enable_rss ? RTE_ETH_MQ_RX_RSS : RTE_ETH_MQ_RX_NONE,
-			.offloads = 0,
+			.offloads = rx_offloads,
 
 			//subtract 4 byte for possibly transparently inserted vlan tag, when using VFs
 			.mtu = (1500) - (is_iavf_device?4:0),
 		},
 		.txmode = {
 			.mq_mode = RTE_ETH_MQ_TX_NONE,
-			.offloads = 0
+			.offloads = tx_offloads
 		},
 		.link_speeds = RTE_ETH_LINK_SPEED_AUTONEG,
 	  	.rx_adv_conf = {

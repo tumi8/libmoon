@@ -38,7 +38,7 @@ local ETQS_QUEUE_ENABLE    = bit.lshift(1, 31)
 -- the tested X520 NIC did not transmit any packets. Therefore all hardware offloading
 -- is disabled. When this feature is required an older version of libmoon should be used
 dev.driverInfo = {
-	disableOffloads = true
+	--disableOffloads = true
 }
 
 dev.supportsFdir  = true
