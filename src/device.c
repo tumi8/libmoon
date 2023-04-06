@@ -70,6 +70,7 @@ struct libmoon_device_config {
 int dpdk_configure_device(struct libmoon_device_config* cfg) {
 	const char* driver = dpdk_get_driver_name(cfg->port);
 	bool is_iavf_device = strcmp("net_iavf", driver) == 0;
+	bool is_ixgbe_device = strcmp("net_ixgbe", driver) == 0;
 	struct rte_eth_dev_info dev_info;
 	rte_eth_dev_info_get(cfg->port, &dev_info);
 
@@ -78,9 +79,12 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		.rss_key_len = cfg->enable_rss_symm ? SYMM_RSS_HASHKEY_LENGTH : 0,
 		.rss_hf = cfg->rss_mask & dev_info.flow_type_rss_offloads,
 	};
+
+	// disable RTE_ETH_RX_OFFLOAD_VLAN_EXTEND on ixgbe device. 
+	// When this RX offload option is enabled, packet which have TX IP Checksum offloading enabled are not transmitted
 	uint64_t rx_offloads = (cfg->disable_offloads ?
 		(RTE_ETH_RX_OFFLOAD_TIMESTAMP)
-		: (RTE_ETH_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? RTE_ETH_RX_OFFLOAD_VLAN_STRIP : 0) | RTE_ETH_RX_OFFLOAD_VLAN_EXTEND | RTE_ETH_RX_OFFLOAD_TIMESTAMP))
+		: (RTE_ETH_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? RTE_ETH_RX_OFFLOAD_VLAN_STRIP : 0) | (!is_ixgbe_device ? RTE_ETH_RX_OFFLOAD_VLAN_EXTEND : 0) | RTE_ETH_RX_OFFLOAD_TIMESTAMP))
 		& dev_info.rx_offload_capa;
 	uint64_t tx_offloads = (cfg->disable_offloads ?
 		RTE_ETH_TX_OFFLOAD_MBUF_FAST_FREE
@@ -92,7 +96,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 			.offloads = rx_offloads,
 
 			//subtract 4 byte for possibly transparently inserted vlan tag, when using VFs
-			.mtu = (1500) - (is_iavf_device?4:0),
+			.mtu = (dev_info.max_mtu) - (is_iavf_device?4:0),
 		},
 		.txmode = {
 			.mq_mode = RTE_ETH_MQ_TX_NONE,
