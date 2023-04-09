@@ -124,7 +124,7 @@ end
 dev.embeddedTimestampAtEndOfBuffer = true
 
 -- this function is called from the filter module to get a DPDK generic flow API
--- pattern list to match UDP PTP packets, which works on X500 NICs (tested on X520)
+-- pattern list to match UDP PTP packets, which works on X500 NICs (tested on X550)
 function dev:getUdpTimestampFilter(ptpType, ver)
 	-- set the flow items (filters)
 	local rawPattern = ffi.new("uint8_t[2]")
@@ -134,8 +134,11 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 	rawMask[0] = 0xFF
 	rawMask[1] = 0xFF
 
-	-- match IPv4 UDP packets, which an addional flex byte filter
 	-- the offset of the RAW pattern is specified from the start of ethernet frame
+	-- On X550 NICs it is not possible to use a flex byte filters while masking
+	-- all bytes of the UDP ports. Therfore one bit of the UDP destination port
+	-- is matched. Two filters are added to cover all possible values of this bit.
+	-- This idea was taken from http://mails.dpdk.org/archives/dev/2016-May/039720.html
 	local firstFilter = ffi.new("struct rte_flow_item[5]", {
 		ffi.new("struct rte_flow_item", {
 			type = ffi.C.RTE_FLOW_ITEM_TYPE_IPV4,
