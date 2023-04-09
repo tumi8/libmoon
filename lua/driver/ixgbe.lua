@@ -34,12 +34,7 @@ local TSYNCRXCTL_TSIP_UP_EN_OFFS = 24
 local ETQS_RX_QUEUE_OFFS   = 16
 local ETQS_QUEUE_ENABLE    = bit.lshift(1, 31)
 
--- when enabling IPv4 or UDP checksum hardware offloading in this version of Moongen
--- the tested X520 NIC did not transmit any packets. Therefore all hardware offloading
--- is disabled. When this feature is required an older version of libmoon should be used
-dev.driverInfo = {
-	--disableOffloads = true
-}
+dev.driverInfo = {}
 
 dev.supportsFdir  = true
 dev.timeRegisters = {SYSTIMEL, SYSTIMEH, TIMEADJL, TIMEADJH}
@@ -141,10 +136,7 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 
 	-- match IPv4 UDP packets, which an addional flex byte filter
 	-- the offset of the RAW pattern is specified from the start of ethernet frame
-	local filters = ffi.new("struct rte_flow_item[5]", {
-		ffi.new("struct rte_flow_item", {
-			type = ffi.C.RTE_FLOW_ITEM_TYPE_ETH,
-		}),
+	local firstFilter = ffi.new("struct rte_flow_item[5]", {
 		ffi.new("struct rte_flow_item", {
 			type = ffi.C.RTE_FLOW_ITEM_TYPE_IPV4,
 			spec = ffi.new("struct rte_flow_item_ipv4", {
@@ -157,10 +149,14 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 		ffi.new("struct rte_flow_item", {
 			type = ffi.C.RTE_FLOW_ITEM_TYPE_UDP,
 			spec = ffi.new("struct rte_flow_item_udp", {
-				hdr = {}
+				hdr = {
+					dst_port = hton16(1)
+				}
 			}),
 			mask = ffi.new("struct rte_flow_item_udp", {
-				hdr = {}
+				hdr = {
+					dst_port = hton16(1)
+				}
 			})
 		}),
 		ffi.new("struct rte_flow_item", {
@@ -187,7 +183,54 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 		ffi.new("struct rte_flow_item", { type = ffi.C.RTE_FLOW_ITEM_TYPE_END })
 	})
 
-	return filters
+	local secondFilter = ffi.new("struct rte_flow_item[5]", {
+		ffi.new("struct rte_flow_item", {
+			type = ffi.C.RTE_FLOW_ITEM_TYPE_IPV4,
+			spec = ffi.new("struct rte_flow_item_ipv4", {
+				hdr = {}
+			}),
+			mask = ffi.new("struct rte_flow_item_ipv4", {
+				hdr = {}
+			})
+		}),
+		ffi.new("struct rte_flow_item", {
+			type = ffi.C.RTE_FLOW_ITEM_TYPE_UDP,
+			spec = ffi.new("struct rte_flow_item_udp", {
+				hdr = {
+					dst_port = hton16(0)
+				}
+			}),
+			mask = ffi.new("struct rte_flow_item_udp", {
+				hdr = {
+					dst_port = hton16(1)
+				}
+			})
+		}),
+		ffi.new("struct rte_flow_item", {
+			type = ffi.C.RTE_FLOW_ITEM_TYPE_RAW,
+			spec = ffi.new("struct rte_flow_item_raw", {
+				relative = 0,
+				search = 0,
+				reserved = 0,
+				offset = 42,
+				limit = 0,
+				length = 2,
+				pattern = rawPattern
+			}),
+			mask = ffi.new("struct rte_flow_item_raw", {
+				relative = 1,
+				search = 1,
+				reserved = 0,
+				offset = ffi.cast("uint32_t", 4294967295), -- = 0xFFFFFFFF as unsigned int
+				limit = 0xffff,
+				length = 0xffff,
+				pattern = rawMask
+			})
+		}),
+		ffi.new("struct rte_flow_item", { type = ffi.C.RTE_FLOW_ITEM_TYPE_END })
+	})
+
+	return {firstFilter, secondFilter}
 end
 
 return dev
