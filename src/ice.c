@@ -14,6 +14,11 @@ void ice_take_timer_ownership(int port){
 	struct ice_hw *hw;
 	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
 	hw->func_caps.ts_func_info.src_tmr_owned = true;
+
+	// use timer 0 regardless of what the NVM configuration says.
+	// Without this settings, no RX or TX timestamps could be captured on the
+	// tested E810 XXV NICs on the second port
+	hw->func_caps.ts_func_info.tmr_index_owned = 0;
 }
 
 void ice_reset_timer(int port){
@@ -69,7 +74,7 @@ uint64_t ice_read_current_timer(int port){
 	struct ice_hw *hw;
 
 	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
-	tmr_index_owned = 0;
+	tmr_index_owned = hw->func_caps.ts_func_info.tmr_index_owned;
 
 	//read captured time (similar procedure as in ice 1.6.4 driver function: ice_ptp_read_src_clk_reg)
 	timeL = rd32(hw, GLTSYN_TIME_L(tmr_index_owned));
