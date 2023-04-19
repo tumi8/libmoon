@@ -71,6 +71,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 	const char* driver = dpdk_get_driver_name(cfg->port);
 	bool is_iavf_device = strcmp("net_iavf", driver) == 0;
 	bool is_ixgbe_device = strcmp("net_ixgbe", driver) == 0;
+	bool is_i40e_device = strcmp("net_i40e", driver) == 0;
 	struct rte_eth_dev_info dev_info;
 	rte_eth_dev_info_get(cfg->port, &dev_info);
 
@@ -80,11 +81,12 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		.rss_hf = cfg->rss_mask & dev_info.flow_type_rss_offloads,
 	};
 
-	// disable RTE_ETH_RX_OFFLOAD_VLAN_EXTEND on ixgbe device. 
-	// When this RX offload option is enabled, packet which have TX IP Checksum offloading enabled are not transmitted
+	// disable RTE_ETH_RX_OFFLOAD_VLAN_EXTEND on ixgbe and i40e devices. 
+	// ixgbe: When this RX offload option is enabled, packet which have TX IP Checksum offloading enabled are not transmitted
+	// i40e: When this offload is enabled unused ports on the same card will stop working (and require a reboot to work again)
 	uint64_t rx_offloads = (cfg->disable_offloads ?
 		(RTE_ETH_RX_OFFLOAD_TIMESTAMP)
-		: (RTE_ETH_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? RTE_ETH_RX_OFFLOAD_VLAN_STRIP : 0) | (!is_ixgbe_device ? RTE_ETH_RX_OFFLOAD_VLAN_EXTEND : 0) | RTE_ETH_RX_OFFLOAD_TIMESTAMP))
+		: (RTE_ETH_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? RTE_ETH_RX_OFFLOAD_VLAN_STRIP : 0) | (!(is_ixgbe_device || is_i40e_device) ? RTE_ETH_RX_OFFLOAD_VLAN_EXTEND : 0) | RTE_ETH_RX_OFFLOAD_TIMESTAMP))
 		& dev_info.rx_offload_capa;
 	uint64_t tx_offloads = (cfg->disable_offloads ?
 		RTE_ETH_TX_OFFLOAD_MBUF_FAST_FREE
