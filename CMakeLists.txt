@@ -15,7 +15,6 @@ SET(FILES
 	src/device
 	src/i40e
 	src/ice
-	src/iavf
 	src/util
 	src/lifecycle
 	src/barrier

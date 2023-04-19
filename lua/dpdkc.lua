@@ -452,8 +452,6 @@ ffi.cdef[[
 	// e810 timestamping
 	void ice_reset_timer(int port);
 	uint64_t ice_read_current_timer(int port);
-	uint64_t iavf_tx_timestamps_read(int port, int slot, uint64_t* tx_prev_ts, uint64_t* tx_wraparound_ctr);
-	bool iavf_modified_driver_detected(int port);
 	void ice_take_timer_ownership(int port);
 
 	int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error);
@@ -463,10 +461,6 @@ ffi.cdef[[
 	void ice_set_bw_limit(int port, uint32_t bw);
 	void ice_tx_sched_set_pps_queue(int port, int queue, bool pps);
 	void ice_tx_sched_set_pps_port(int port, bool pps);
-
-	// iavf e810 VF bw limiting
-	int iavf_config_rate_limit_port(int port, uint64_t bw, bool pps);
-	void iavf_config_rate_limit_queue(int port, int queue, uint64_t bw, bool pps);
 
 	// statistics
 	void rte_eth_stats_get(uint8_t port, struct rte_eth_stats* stats);
