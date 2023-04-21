@@ -71,7 +71,7 @@ function pkt:getTimestamp(dev)
 			high = timestamp[1]
 			return high * 10^9 + low
 		elseif dev and dev.embeddedTimestampInPacket then
-			-- ice-style NICs use the timestamp dynfield
+			-- ice and mlx5 NICs use the timestamp dynfield
 			return tonumber(dpdkc.get_timestamp_dynfield(ffi.cast('struct rte_mbuf*', self)))
 		else
 			-- TODO: this is only tested with the Intel 82580 NIC at the moment

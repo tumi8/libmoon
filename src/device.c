@@ -72,6 +72,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 	bool is_iavf_device = strcmp("net_iavf", driver) == 0;
 	bool is_ixgbe_device = strcmp("net_ixgbe", driver) == 0;
 	bool is_i40e_device = strcmp("net_i40e", driver) == 0;
+	bool is_mlx5_device = strcmp("mlx5_pci", driver) == 0;
 	struct rte_eth_dev_info dev_info;
 	rte_eth_dev_info_get(cfg->port, &dev_info);
 
@@ -86,7 +87,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 	// i40e: When this offload is enabled unused ports on the same card will stop working (and require a reboot to work again)
 	uint64_t rx_offloads = (cfg->disable_offloads ?
 		(RTE_ETH_RX_OFFLOAD_TIMESTAMP)
-		: (RTE_ETH_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? RTE_ETH_RX_OFFLOAD_VLAN_STRIP : 0) | (!(is_ixgbe_device || is_i40e_device) ? RTE_ETH_RX_OFFLOAD_VLAN_EXTEND : 0) | RTE_ETH_RX_OFFLOAD_TIMESTAMP))
+		: (RTE_ETH_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? RTE_ETH_RX_OFFLOAD_VLAN_STRIP : 0) | (!(is_ixgbe_device || is_i40e_device) ? RTE_ETH_RX_OFFLOAD_VLAN_EXTEND : 0) | RTE_ETH_RX_OFFLOAD_TIMESTAMP | (is_mlx5_device ? RTE_ETH_RX_OFFLOAD_SCATTER: 0)))
 		& dev_info.rx_offload_capa;
 	uint64_t tx_offloads = (cfg->disable_offloads ?
 		RTE_ETH_TX_OFFLOAD_MBUF_FAST_FREE
@@ -98,7 +99,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 			.offloads = rx_offloads,
 
 			//subtract 4 byte for possibly transparently inserted vlan tag, when using VFs
-			.mtu = (dev_info.max_mtu) - (is_iavf_device?4:0),
+			.mtu = dev_info.max_mtu - (is_iavf_device?4:0),
 		},
 		.txmode = {
 			.mq_mode = RTE_ETH_MQ_TX_NONE,
@@ -109,6 +110,9 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 			.rss_conf = rss_conf,
 		} 
 	};
+	// dev_info reports a invalid result for mlx5 devices -> use a fixed MTU of 9000B
+	if(is_mlx5_device) port_conf.rxmode.mtu = 9000;
+
 	if(!cfg->enable_rss){
 		memset(&port_conf.rx_adv_conf, 0, sizeof(port_conf.rx_adv_conf));
 	}

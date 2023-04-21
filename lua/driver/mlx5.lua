@@ -7,8 +7,9 @@ local log = require "log"
 
 local C = ffi.C
 
--- the mlx5 driver does not support the flowfilters we normally use
-dev.USE_GENERIC_FILTER = true
+dev.embeddedTimestampInPacket	= true
+dev.supportsFdir  				= true
+dev.skipSync					= true
 
 --- Function which sets all mlx5 specific values, is automatically called at program startup
 function dev:init()
@@ -20,27 +21,27 @@ function dev:init()
 	-- last resort in this case is to comment out dev:getRxStats() to default to the normal counting behavior
 	local id = ffi.new("uint64_t[1]", 1337)
 	
-	local ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_port_unicast_bytes", id)
+	local ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_unicast_bytes", id)
 	self.uc_byte_id = tonumber(id[0])
 	if ok ~= 0 then log:fatal("Failed to extract xstats. Uniform packet counting not possible.") end
 	
-	ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_port_multicast_bytes", id)
+	ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_multicast_bytes", id)
 	self.mc_byte_id = tonumber(id[0])
 	if ok ~= 0 then log:fatal("Failed to extract xstats. Uniform packet counting not possible.") end
 
-	ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_port_broadcast_bytes", id)
+	ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_broadcast_bytes", id)
 	self.bc_byte_id = tonumber(id[0])
 	if ok ~= 0 then log:fatal("Failed to extract xstats. Uniform packet counting not possible.") end
 
-	ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_port_unicast_packets", id)
+	ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_unicast_packets", id)
 	self.uc_pkt_id = tonumber(id[0])
 	if ok ~= 0 then log:fatal("Failed to extract xstats. Uniform packet counting not possible.") end
 
-	ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_port_multicast_packets", id)
+	ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_multicast_packets", id)
 	self.mc_pkt_id = tonumber(id[0])
 	if ok ~= 0 then log:fatal("Failed to extract xstats. Uniform packet counting not possible.") end
 
-	ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_port_broadcast_packets", id)
+	ok = C.rte_eth_xstats_get_id_by_name(self.id, "rx_broadcast_packets", id)
 	self.bc_pkt_id = tonumber(id[0])
 	if ok ~= 0 then log:fatal("Failed to extract xstats. Uniform packet counting not possible.") end
 
@@ -77,5 +78,11 @@ function dev:getRxStats()
 	self.rxBytes =  (self.xstats[self.uc_byte_id].value or 0ULL) + (self.xstats[self.mc_byte_id].value or 0ULL) + (self.xstats[self.bc_byte_id].value or 0ULL)
 	return tonumber(self.rxPkts), tonumber( self.rxBytes)
 end
+
+-- the timestamping counters on mlx5 devices are enabled by default
+-- timestamps are added to all received packets automatically, when the corresponding
+-- RX offload flag is set
+function dev:enableRxTimestampsAllPackets() end
+function dev:enableRxTimestamps(queue, udpPort) end
 
 return dev
