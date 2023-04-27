@@ -29,7 +29,7 @@ function dev:setRate(rate, pktSize)
 	-- Therfore we added a correction function
 	if pktSize ~= nil then
 		local bwLimitPPS = ((bwLimit * 1e6) / ((pktSize+4)*8)) * 2 * 1000 / 1024
-		if (dpdkc.iavf_config_rate_limit_port(self.id,  math.floor(bwLimit+0.5), true) ~= 0) then
+		if (dpdkc.iavf_config_rate_limit_port(self.id,  math.floor(bwLimitPPS+0.5), true) ~= 0) then
 			log:warn("Could not set rate limit base on PPS. Trying bandwidth based rate limiting instead!")
 			-- try using rate limiting based on bandwidth instead of pps, in case a rate limiting
 			-- was set by the PF (and PPS rate limiting is therfore not possible)

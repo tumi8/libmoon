@@ -10,24 +10,19 @@ uint64_t iavf_tx_timestamp_read_raw(int port){
 
 int iavf_config_rate_limit_port(int port, uint64_t bw, bool pps){
 	struct iavf_adapter *adapter = IAVF_DEV_PRIVATE_TO_ADAPTER(rte_eth_devices[port].data->dev_private);
-	return 0;
-	/*
 	enum iavf_status ret = iavf_config_bw_limit_port(adapter, bw, pps);
 	if(ret!=IAVF_SUCCESS){
 		return -1;
 	}
-	return 0;‚
-	*/
+	return 0;
 }
 
 void iavf_config_rate_limit_queue(int port, int queue, uint64_t bw, bool pps){
 	struct iavf_adapter *adapter = IAVF_DEV_PRIVATE_TO_ADAPTER(rte_eth_devices[port].data->dev_private);
-	/*
 	enum iavf_status ret = iavf_config_bw_limit_queue(adapter, queue, bw, pps);
 	if(ret!=IAVF_SUCCESS){
 		printf("Could not set max bandwidth limit for port %d and queue %d!\n", port, queue);
 	}
-	*/
 }
 
 bool iavf_modified_driver_detected(int port){
