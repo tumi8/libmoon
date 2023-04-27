@@ -90,11 +90,14 @@ function dev:filterL2Timestamps(queue)
 	end
 end
 
--- this function is called from the filter module to get a DPDK generic flow API
--- pattern list to match UDP PTP packets, which works on E810 VFs. This only works
--- with a modified version of the DPDK VF and PF drivers
+-- this function is called from the filter module to get a DPDK generic flow API pattern list
+-- the pattern uses a RAW Filter to match all IPv4 UDP Packets, which have the correct ptpType and version
+-- in the first two bytes of the UDP payload (tested on E810-XXV)
 function dev:getUdpTimestampFilter(ptpType, ver)
-	-- set the flow items (filters)
+	if not dpdkc.iavf_modified_driver_detected(self.id) then
+		log:warn("UDP PTP packet filtering for E810 VFs requires a modified version of the PF driver and is not supported on X700 VFs")
+	end
+
 	local rawPattern = ffi.new("uint8_t[2]")
 	local rawMask = ffi.new("uint8_t[2]")
 	rawPattern[0] = ptpType
@@ -102,8 +105,6 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 	rawMask[0] = 0xFF
 	rawMask[1] = 0xFF
 
-	-- match IPv4, with an ethertype corresponding to UDP, which an addional flex byte filter
-	-- the offset of the RAW pattern is specified from the start of the ethernet frame
 	local filters = ffi.new("struct rte_flow_item[4]", {
 		ffi.new("struct rte_flow_item", {
 			type = ffi.C.RTE_FLOW_ITEM_TYPE_ETH,
@@ -126,7 +127,7 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 			spec = ffi.new("struct rte_flow_item_raw", {
 				relative = 0,
 				search = 0,
-				reserved = 0,
+				reserved = 1,
 				offset = 42,
 				limit = 0,
 				length = 2,
@@ -135,7 +136,7 @@ function dev:getUdpTimestampFilter(ptpType, ver)
 			mask = ffi.new("struct rte_flow_item_raw", {
 				relative = 1,
 				search = 1,
-				reserved = 0,
+				reserved = 1,
 				offset = ffi.cast("uint32_t", 4294967295), -- = 0xFFFFFFFF as unsigned int
 				limit = 0xffff,
 				length = 0xffff,
