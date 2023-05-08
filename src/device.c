@@ -86,7 +86,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 	// ixgbe: When this RX offload option is enabled, packet which have TX IP Checksum offloading enabled are not transmitted
 	// i40e: When this offload is enabled unused ports on the same card will stop working (and require a reboot to work again)
 	uint64_t rx_offloads = (cfg->disable_offloads ?
-		(RTE_ETH_RX_OFFLOAD_TIMESTAMP)
+		(0)
 		: (RTE_ETH_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? RTE_ETH_RX_OFFLOAD_VLAN_STRIP : 0) | (!(is_ixgbe_device || is_i40e_device) ? RTE_ETH_RX_OFFLOAD_VLAN_EXTEND : 0) | RTE_ETH_RX_OFFLOAD_TIMESTAMP | (is_mlx5_device ? RTE_ETH_RX_OFFLOAD_SCATTER: 0)))
 		& dev_info.rx_offload_capa;
 	uint64_t tx_offloads = (cfg->disable_offloads ?
@@ -128,7 +128,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		.offloads = tx_offloads,
 	};
 	for (int i = 0; i < cfg->tx_queues; i++) {
-		rc = rte_eth_tx_queue_setup(cfg->port, i, cfg->tx_descs ? cfg->tx_descs : DEFAULT_TX_DESCS, SOCKET_ID_ANY, &tx_conf);
+		rc = rte_eth_tx_queue_setup(cfg->port, i, cfg->tx_descs ? cfg->tx_descs : DEFAULT_TX_DESCS, dpdk_get_socket(cfg->port), &tx_conf);
 		if (rc) {
 			printf("could not configure tx queue %d\n", i);
 			return rc;
@@ -144,7 +144,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		.offloads = rx_offloads,
 	};
 	for (int i = 0; i < cfg->rx_queues; i++) {
-		rc = rte_eth_rx_queue_setup(cfg->port, i, cfg->rx_descs ? cfg->rx_descs : DEFAULT_RX_DESCS, SOCKET_ID_ANY, &rx_conf, cfg->mempools[i]);
+		rc = rte_eth_rx_queue_setup(cfg->port, i, cfg->rx_descs ? cfg->rx_descs : DEFAULT_RX_DESCS, dpdk_get_socket(cfg->port), &rx_conf, cfg->mempools[i]);
 		if (rc != 0) {
 			printf("could not configure rx queue %d\n", i);
 			return rc;
