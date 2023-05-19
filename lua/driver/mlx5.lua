@@ -79,10 +79,36 @@ function dev:getRxStats()
 	return tonumber(self.rxPkts), tonumber( self.rxBytes)
 end
 
+--- Custom RSS Setup for Mellanox ConnectX 6 NICS -> The RETA size can be changed -> use 64
+function dev:setRssQueues(n, baseQueue)
+	baseQueue = baseQueue or 0
+	assert(n > 0)
+	if bit.band(n, n - 1) ~= 0 then
+		log:warn("RSS distribution to queues will not be balanced as the number of queues (%d) is not a power of two.", n)
+	end
+	local retaSize = 64
+	local entries = ffi.new("struct rte_eth_rss_reta_entry64[?]", retaSize / 64)
+	local queue = baseQueue
+	for i = 0, retaSize / 64 - 1 do
+		entries[i].mask = 0xFFFFFFFFFFFFFFFFULL
+		for j = 0, 63 do
+			entries[i].reta[j] = queue
+			queue = queue + 1
+			if queue == baseQueue + n then
+				queue = baseQueue
+			end
+		end
+	end
+	local ret = ffi.C.rte_eth_dev_rss_reta_update(self.id, entries, retaSize)
+	if ret ~= 0 then
+		log:fatal("Error setting up RETA table: " .. strError(ret))
+	end
+end
+
 -- the timestamping counters on mlx5 devices are enabled by default
 -- timestamps are added to all received packets automatically, when the corresponding
 -- RX offload flag is set
-function dev:enableRxTimestampsAllPackets() end
+function dev:enableRxTimestampsAllPackets(queue) end
 function dev:enableRxTimestamps(queue, udpPort) end
 
 return dev
