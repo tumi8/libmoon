@@ -28,6 +28,37 @@ HKR,,Icon,,-5
 
 [Standard.NT$ARCH$]
 %netuio.DeviceDesc%=netuio_Device, Root\netuio
+%netuio.nvme.DeviceDesc%=netuio_Device, PCI\CC_010802
+%Intel.F1521.Description%=netuio_Device, PCI\VEN_8086&DEV_1521
+%Intel.F1572.Description%=netuio_Device, PCI\VEN_8086&DEV_1572
+%Intel.F1580.Description%=netuio_Device, PCI\VEN_8086&DEV_1580
+%Intel.F1581.Description%=netuio_Device, PCI\VEN_8086&DEV_1581
+%Intel.F1583.Description%=netuio_Device, PCI\VEN_8086&DEV_1583
+%Intel.F1584.Description%=netuio_Device, PCI\VEN_8086&DEV_1584
+%Intel.F1585.Description%=netuio_Device, PCI\VEN_8086&DEV_1585
+%Intel.F1586.Description%=netuio_Device, PCI\VEN_8086&DEV_1586
+%Intel.F1589.Description%=netuio_Device, PCI\VEN_8086&DEV_1589
+%Intel.F158A.SFP28.Description%=netuio_Device, PCI\VEN_8086&DEV_158A
+%Intel.F158B.SFP28.Description%=netuio_Device, PCI\VEN_8086&DEV_158B
+%Intel.F15FF.Description%=netuio_Device, PCI\VEN_8086&DEV_15FF
+%Intel.F101F.Description%=netuio_Device, PCI\VEN_8086&DEV_101F
+%Intel.F104F.Description%=netuio_Device, PCI\VEN_8086&DEV_104F
+%Intel.F104E.Description%=netuio_Device, PCI\VEN_8086&DEV_104E
+%Intel.F10D3.Description%=netuio_Device, PCI\VEN_8086&DEV_10D3
+%Intel.F10ED.Description%=netuio_Device, PCI\VEN_8086&DEV_10ED
+%Intel.F1591.Description%=netuio_Device, PCI\VEN_8086&DEV_1591
+%Intel.F1592.Description%=netuio_Device, PCI\VEN_8086&DEV_1592
+%Intel.F1593.Description%=netuio_Device, PCI\VEN_8086&DEV_1593
+%Intel.F1599.Description%=netuio_Device, PCI\VEN_8086&DEV_1599
+%Intel.F159A.Description%=netuio_Device, PCI\VEN_8086&DEV_159A
+%Intel.F159B.Description%=netuio_Device, PCI\VEN_8086&DEV_159B
+%Intel.F154C.Description%=netuio_Device, PCI\VEN_8086&DEV_154C
+%Intel.F1571.Description%=netuio_Device, PCI\VEN_8086&DEV_1571
+%Intel.F1889.Description%=netuio_Device, PCI\VEN_8086&DEV_1889
+%Intel.F374D.Description%=netuio_Device, PCI\VEN_8086&DEV_374D
+%Intel.F37CD.Description%=netuio_Device, PCI\VEN_8086&DEV_37CD
+%Intel.F3759.Description%=netuio_Device, PCI\VEN_8086&DEV_3759
+%vmxnet3.Description%=netuio_Device, PCI\VEN_15AD&DEV_07B0
 
 [netuio_Device.NT]
 CopyFiles=Drivers_Dir
@@ -71,6 +102,37 @@ Provider = "Vendor"
 ClassName = "Windows UIO"
 DiskName = "DPDK netUIO Installation Disk"
 netuio.DeviceDesc = "netuio Device"
+netuio.nvme.DeviceDesc = "netuio NVM Express Controller"
+Intel.F1521.Description = "Intel(R) I350 Gigabit Network Connection"
+Intel.F1572.Description = "Intel(R) Ethernet Controller X710 for 10GbE SFP+"
+Intel.F1580.Description = "Intel(R) Ethernet Controller XL710 for 40GbE backplane"
+Intel.F1581.Description = "Intel(R) Ethernet Controller X710 for 10GbE backplane"
+Intel.F1583.Description = "Intel(R) Ethernet Converged Network Adapter XL710-Q2"
+Intel.F1584.Description = "Intel(R) Ethernet Controller XL710 for 40GbE QSFP+"
+Intel.F1585.Description = "Intel(R) Ethernet Controller XL710 for 10GbE QSFP+"
+Intel.F1586.Description = "Intel(R) Ethernet Controller X710 for 10GBASE-T"
+Intel.F1589.Description = "Intel(R) Ethernet Converged Network Adapter X710-T"
+Intel.F158A.SFP28.Description = "Intel(R) Ethernet Controller XXV710 for 25GbE backplane"
+Intel.F158B.SFP28.Description = "Intel(R) Ethernet Controller XXV710 for 25GbE SFP28"
+Intel.F15FF.Description = "Intel(R) Ethernet Controller X710 for 10GBASE-T"
+Intel.F101F.Description = "Intel(R) Ethernet Controller V710 for 5GBASE-T"
+Intel.F104F.Description = "Intel(R) Ethernet Controller X710 for 10 Gigabit backplane"
+Intel.F104E.Description = "Intel(R) Ethernet Controller X710 for 10 Gigabit SFP+"
+Intel.F10D3.Description = "Intel(R) 82574L Gigabit Network Connection"
+Intel.F10ED.Description = "Intel(R) 82599 Virtual Function"
+Intel.F1591.Description = "Intel(R) Ethernet Controller E810-C for backplane"
+Intel.F1592.Description = "Intel(R) Ethernet Controller E810-C for QSFP"
+Intel.F1593.Description = "Intel(R) Ethernet Controller E810-C for SFP"
+Intel.F1599.Description = "Intel(R) Ethernet Controller E810-XXV for backplane"
+Intel.F159A.Description = "Intel(R) Ethernet Controller E810-XXV for QSFP"
+Intel.F159B.Description = "Intel(R) Ethernet Controller E810-XXV for SFP"
+Intel.F154C.Description = "Intel(R) Ethernet Virtual Function 700 Series"
+Intel.F1571.Description = "Intel(R) Ethernet Virtual Function 700 Series"
+Intel.F1889.Description = "Intel(R) Ethernet Adaptive Virtual Function"
+Intel.F374D.Description = "Intel(R) X722 Virtual Function"
+Intel.F37CD.Description = "Intel(R) Ethernet Virtual Function 700 Series"
+Intel.F3759.Description = "Intel(R) X722 Virtual Function"
+vmxnet3.Description = "VMWare Paravirtualized Ethernet v3"
 netuio.SVCDESC = "netuio Service"
 
 [DMAr.reg]
