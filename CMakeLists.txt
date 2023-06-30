@@ -1,46 +1,40 @@
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8...3.18)
 PROJECT(libmoon C CXX)
-
-option(USE_MLX5 "Compile with mlx5 driver" OFF)
-option(USE_MLX4 "Compile with mlx4 driver" OFF)
 
 SET(CMAKE_CXX_FLAGS "-fno-stack-protector -Wall -Wextra -Wno-unused-parameter -g -O3 -std=gnu++11 -march=native -msse4.2")
 SET(CMAKE_C_FLAGS "-fno-stack-protector -Wall -Wextra -Wno-unused-parameter -g -O3 -std=gnu11 -march=native -msse4.2")
 SET(CMAKE_EXE_LINKER_FLAGS "-rdynamic") # to access functions from luajit
 
 SET(FILES
-	src/main
-	src/memory
-	src/task
-	src/device
-	src/i40e
-	src/ice
-	src/iavf
-	src/util
-	src/lifecycle
-	src/barrier
-	src/task-results
-	src/pipe
-	src/lock
-	src/namespaces
-	src/ring
-	src/filter
-	src/pcap
-	src/timestamping
-	src/timestamping_i40e
-	src/timestamping_ixgbe
-	src/timestamping_igb
-	src/tx_scheduler_ice
-	src/bytesizedring
-	src/pktsizedring
+	src/main.cpp
+	src/memory.c
+	src/task.cpp
+	src/device.c
+	src/i40e.c
+	src/ice.c
+	src/iavf.c
+	src/util.c
+	src/lifecycle.cpp
+	src/barrier.cpp
+	src/task-results.cpp
+	src/pipe.cpp
+	src/lock.cpp
+	src/namespaces.cpp
+	src/ring.c
+	src/filter.c
+	src/pcap.cpp
+	src/timestamping.c
+	src/timestamping_i40e.c
+	src/timestamping_ixgbe.c
+	src/timestamping_igb.c
+	src/tx_scheduler_ice.c
+	src/bytesizedring.cpp
+	src/pktsizedring.cpp
+	src/flexpipe.c
 )
 
 SET(LUAJIT_LIBS
 	luajit-5.1
-)
-
-SET(HIGHWAYHASH_LIBS
-	highwayhash
 )
 
 find_package(PkgConfig QUIET)
@@ -48,16 +42,9 @@ if(PKG_CONFIG_FOUND)
   pkg_check_modules(dpdk IMPORTED_TARGET libdpdk)
 endif()
 
-# add tbb
-include(${CMAKE_CURRENT_SOURCE_DIR}/deps/tbb/cmake/TBBBuild.cmake)
-tbb_build(TBB_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/deps/tbb CONFIG_DIR TBB_DIR)
-# find the cmake configuration file
-find_package(TBB)
-
 SET(ALL_LIBS
 	-Wl,--whole-archive
 	${LUAJIT_LIBS}
-	${HIGHWAYHASH_LIBS}
 	-Wl,--no-whole-archive
 )
 
@@ -78,8 +65,6 @@ INCLUDE_DIRECTORIES(
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/e1000/base
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/bus/pci
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/luajit/src
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/highwayhash/highwayhash
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/tbb/include
 	${CMAKE_CURRENT_SOURCE_DIR}/lib
 	${CMAKE_CURRENT_SOURCE_DIR}/src
 )
@@ -87,16 +72,15 @@ INCLUDE_DIRECTORIES(
 LINK_DIRECTORIES(
 	${dpdk_STATIC_LINK_DIRS}
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/luajit/usr/local/lib
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/highwayhash/lib
 )
 
 IF(LIBMOON_BUILD_LIBRARY)
 	ADD_DEFINITIONS(-DLIBMOON_BUILD_LIB)
 	# we want libmoon.a, not liblibmoon.a
 	ADD_LIBRARY(moon STATIC ${FILES})
-	TARGET_LINK_LIBRARIES(moon ${ALL_LIBS} ${TBB} -Wl,--start-group ${dpdk_STATIC_LINK_LIBRARIES} ${dpdk_STATIC_LDFLAGS} ${dpdk_STATIC_LDFLAGS_OTHER} numa -Wl,--end-group pthread dl rt)
+	TARGET_LINK_LIBRARIES(moon ${ALL_LIBS} -Wl,--start-group ${dpdk_STATIC_LINK_LIBRARIES} ${dpdk_STATIC_LDFLAGS} ${dpdk_STATIC_LDFLAGS_OTHER} numa -Wl,--end-group pthread dl rt)
 ELSE()
 	ADD_EXECUTABLE(libmoon ${FILES})
-	TARGET_LINK_LIBRARIES(libmoon ${ALL_LIBS} ${TBB} -Wl,--start-group ${dpdk_STATIC_LINK_LIBRARIES} ${dpdk_STATIC_LDFLAGS} ${dpdk_STATIC_LDFLAGS_OTHER} numa -Wl,--end-group pthread dl rt)
+	TARGET_LINK_LIBRARIES(libmoon ${ALL_LIBS} -Wl,--start-group ${dpdk_STATIC_LINK_LIBRARIES} ${dpdk_STATIC_LDFLAGS} ${dpdk_STATIC_LDFLAGS_OTHER} numa -Wl,--end-group pthread dl rt)
 ENDIF()
 
