@@ -36,7 +36,7 @@ Just run `build.sh`, `bind-interfaces.sh`, and `setup-hugetlbfs.sh`. When using 
 
 ```
 # install dependencies and compile libmoon
-sudo apt-get install git build-essential cmake linux-headers-`uname -r` lshw libnuma-dev meson ninja-build pkg-config python3-pyelftools
+sudo apt-get install git build-essential cmake linux-headers-`uname -r` lshw libnuma-dev libsystemd-dev meson ninja-build pkg-config python3-pyelftools
 git clone https://github.com/WiednerF/libmoon
 cd libmoon
 ./build.sh
@@ -58,9 +58,11 @@ Note: Use `deps/dpdk/tools/dpdk-devbind.py` to manage NIC drivers manually to ge
 * ninja-build
 * pkg-config
 * python3-pyelftools
-* kernel headers (for the DPDK igb-uio driver)
-* lspci (for dpdk-devbind.py)
 * libnuma-dev
+* libsystemd-dev
+* kernel headers (for the DPDK igb-uio driver)
+* lspci (for `dpdk-devbind.py`)
+* [additional dependencies](install-mlx.md) for Mellanox NICs
 
 # FAQ
 
