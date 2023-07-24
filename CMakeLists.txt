@@ -30,7 +30,6 @@ SET(FILES
 	src/tx_scheduler_ice.c
 	src/bytesizedring.cpp
 	src/pktsizedring.cpp
-	src/flexpipe.c
 )
 
 SET(LUAJIT_LIBS
