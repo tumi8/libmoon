@@ -87,7 +87,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 	// i40e: When this offload is enabled unused ports on the same card will stop working (and require a reboot to work again)
 	uint64_t rx_offloads = (cfg->disable_offloads ?
 		(0)
-		: (RTE_ETH_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? RTE_ETH_RX_OFFLOAD_VLAN_STRIP : 0) | (!(is_ixgbe_device || is_i40e_device) ? RTE_ETH_RX_OFFLOAD_VLAN_EXTEND : 0) | (is_mlx5_device ? RTE_ETH_RX_OFFLOAD_SCATTER: 0)))
+		: (RTE_ETH_RX_OFFLOAD_CHECKSUM | (cfg->strip_vlan ? RTE_ETH_RX_OFFLOAD_VLAN_STRIP : 0) | (!(is_ixgbe_device || is_i40e_device) ? RTE_ETH_RX_OFFLOAD_VLAN_EXTEND : 0) | RTE_ETH_RX_OFFLOAD_TIMESTAMP | (is_mlx5_device ? RTE_ETH_RX_OFFLOAD_SCATTER: 0)))
 		& dev_info.rx_offload_capa;
 	uint64_t tx_offloads = (cfg->disable_offloads ?
 		RTE_ETH_TX_OFFLOAD_MBUF_FAST_FREE
