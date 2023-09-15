@@ -7,6 +7,7 @@ FLAGS=""
 OPTIONS=''
 MOON=false
 DISABLED_DRIVERS="net/octeontx,net/octeontx2,compress/octeontx,regex/octeontx2,baseband/turbo_sw,baseband/null,baseband/fpga_lte_fec,baseband/fpga_5gnr_fec,baseband/acc100,crypto/bcmfs,crypto/caam_jr,crypto/dpaa_sec,crypto/dpaa2_sec,crypto/nitrox,crypto/octeontx,crypto/octeontx2,event/dlb,event/dlb2,event/opdl,event/skeleton,event/sw,event/dsw,common/octeontx,common/octeontx2,raw/dpaa2_cmdif,raw/dpaa2_qdma,raw/ioat,raw/ntb,raw/octeontx2_dma,raw/octeontx2_ep,raw/skeleton,net/ark,net/atlantic,net/avp,net/axgbe,net/bnxt,net/cxgbe,net/dpaa,net/dpaa2,net/ena,net/enetc,net/enic,net/fm10k,net/hinic,net/hns3,net/kni,net/liquidio,net/netvsc,net/nfp,net/null,net/pfe,net/qede,net/thunderx,net/txgbe,vdpa/ifc,crypto/null,crypto/scheduler,net/ngbe,mempool/dpaa,mempool/dpaa2,bus/dpaa,dma/dpaa,baseband/la12xx,common/cnxk,mempool/cnxk,dma/cnxk,net/cnxk,crypto/cnxk,event/cnxk,raw/cnxk_bphy,dma/hisilicon,net/enetfec,net/octeontx_ep"
+NO_BIND=false
 
 while :; do
 	case $1 in
@@ -22,6 +23,10 @@ while :; do
 		-a)
 			echo "Building DPDK with all drivers (except dpaa)"
 			DISABLED_DRIVERS="net/dpaa,net/dpaa2"
+			;;
+		--noBind) #skip binding unused interfaces to the igb_uio driver
+			echo "Skip binding unused interfaces to the igb_uio driver"
+			NO_BIND=true
 			;;
 		-?*)
 			printf 'WARN: Unknown option (abort): %s\n' "$1" >&2
@@ -84,8 +89,12 @@ PKG_CONFIG_PATH=$PKG_CONFIG_PATH cmake ${OPTIONS}..
 PKG_CONFIG_PATH=$PKG_CONFIG_PATH make -j $NUM_CPUS
 )
 
-echo Trying to bind interfaces, this will fail if you are not root
-echo Try "sudo ./bind-interfaces.sh" if this step fails
-./bind-interfaces.sh ${FLAGS}
+
+if ! ${NO_BIND}
+then
+	echo Trying to bind interfaces, this will fail if you are not root
+	echo Try "sudo ./bind-interfaces.sh" if this step fails
+	./bind-interfaces.sh ${FLAGS}
+fi
 )
 
