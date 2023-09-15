@@ -99,7 +99,7 @@ then
 else
 	#load igb_uio kernel module
 	modprobe uio
-	(lsmod | grep igb_uio > /dev/null) || insmod ../dpdk-kmods/linux/igb_uio/igb_uio.ko
+	(lsmod | grep igb_uio > /dev/null) || insmod deps/dpdk-kmods/linux/igb_uio/igb_uio.ko
 fi
 )
 
