@@ -58,6 +58,7 @@ cd deps/dpdk-kmods/linux/igb_uio
 make -j $NUM_CPUS
 )
 
+# -Dc_args="-DRTE_LIBRTE_ICE_16BYTE_RX_DESC" 
 export PKG_CONFIG_PATH=$(pwd)/deps/dpdk/x86_64-native-linux-gcc/lib/x86_64-linux-gnu/pkgconfig/:$PKG_CONFIG_PATH
 (
 cd deps/dpdk
@@ -95,6 +96,10 @@ then
 	echo Trying to bind interfaces, this will fail if you are not root
 	echo Try "sudo ./bind-interfaces.sh" if this step fails
 	./bind-interfaces.sh ${FLAGS}
+else
+	#load igb_uio kernel module
+	modprobe uio
+	(lsmod | grep igb_uio > /dev/null) || insmod ../dpdk-kmods/linux/igb_uio/igb_uio.ko
 fi
 )
 
