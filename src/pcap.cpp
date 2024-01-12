@@ -26,7 +26,7 @@ extern "C" {
 		memcpy(&dst->data, packet, len);
 	}
 
-	rte_mbuf* libmoon_read_pcap(rte_mempool* mp, const pcapRecHeader* src, uint64_t remaining, uint32_t mempool_buf_size) {
+	rte_mbuf* libmoon_read_pcap(rte_mempool* mp, const uint32_t magic_number, const pcapRecHeader* src, uint64_t remaining, uint32_t mempool_buf_size) {
 		if (src->incl_len >= remaining) {
 			return nullptr;
 		}
@@ -41,18 +41,19 @@ extern "C" {
 		}
 		res->pkt_len = src->incl_len;
 		res->data_len = copy_len + zero_fill_len;
-		set_timestamp_dynfield(res, src->ts_sec * 1000000ULL + src->ts_usec);
+                uint64_t unit_modifier = magic_number == 0xa1b2c3d4 ? 1000000ULL : 1000000000ULL;
+		set_timestamp_dynfield(res, src->ts_sec * unit_modifier + src->ts_usec);
 		uint8_t* data = rte_pktmbuf_mtod(res, uint8_t*);
 		memcpy(data, &src->data, copy_len);
 		memset(data + copy_len, 0, zero_fill_len);
 		return res;
 	}
 
-	uint32_t libmoon_read_pcap_batch(rte_mempool* mp, rte_mbuf** bufs, uint32_t num_bufs, const uint8_t* pcap, uint64_t remaining, uint32_t mempool_buf_size) {
+	uint32_t libmoon_read_pcap_batch(rte_mempool* mp, rte_mbuf** bufs, uint32_t num_bufs, const uint32_t magic_number, const uint8_t* pcap, uint64_t remaining, uint32_t mempool_buf_size) {
 		uint64_t offset = 0;
 		for (uint32_t i = 0; i < num_bufs; ++i) {
 			const pcapRecHeader* header = reinterpret_cast<const pcapRecHeader*>(pcap + offset);
-			rte_mbuf* buf = libmoon_read_pcap(mp, header, remaining, mempool_buf_size);
+			rte_mbuf* buf = libmoon_read_pcap(mp, magic_number, header, remaining, mempool_buf_size);
 			bufs[i] = buf;
 			if (!buf) return i;
 			offset += header->incl_len + sizeof(pcapRecHeader);

@@ -147,7 +147,7 @@ local function readHeader(ptr)
 	local hdr = headerPointer(ptr)
 	if hdr.magic_number == 0xd4c3b2a1 then
 		log:fatal("big endian pcaps are not supported")
-	elseif hdr.magic_number ~= 0xa1b2c3d4 then
+	elseif hdr.magic_number ~= 0xa1b2c3d4 and hdr.magic_number ~= 0xa1b23c4d then
 		log:fatal("not a pcap file")
 	end
 	if hdr.version_major ~= 2 or hdr.version_minor ~= 4 then
@@ -181,8 +181,8 @@ function mod:newReader(filename)
 end
 
 ffi.cdef[[
-	struct rte_mbuf* libmoon_read_pcap(struct mempool* mp, const void* pcap, uint64_t remaining, uint32_t mempool_buf_size);
-	uint32_t libmoon_read_pcap_batch(struct mempool* mp, struct rte_mbuf** bufs, uint32_t num_bufs, const void* pcap, uint64_t remaining, uint32_t mempool_buf_size);
+	struct rte_mbuf* libmoon_read_pcap(struct mempool* mp, const uint32_t magic_number, const void* pcap, uint64_t remaining, uint32_t mempool_buf_size);
+	uint32_t libmoon_read_pcap_batch(struct mempool* mp, struct rte_mbuf** bufs, uint32_t num_bufs, const uint32_t magic_number, const void* pcap, uint64_t remaining, uint32_t mempool_buf_size);
 ]]
 
 --- Read the next packet into a buf, the timestamp is stored in the timestamping dynfield as microseconds.
@@ -193,7 +193,8 @@ function reader:readSingle(mempool, mempoolBufSize)
 	if fileRemaining < 32 then -- header size
 		return nil
 	end
-	local buf = C.libmoon_read_pcap(mempool, self.ptr + self.offset, fileRemaining, mempoolBufSize)
+	local buf = C.libmoon_read_pcap(mempool, headerPointer(cast("pcap_hdr_t *", self.ptr)).magic_number,
+					self.ptr + self.offset, fileRemaining, mempoolBufSize)
 	if buf then
 		self.offset = self.offset + buf.pkt_len + 16
 		-- chained mbufs not supported for now
@@ -211,7 +212,9 @@ function reader:read(bufs, mempoolBufSize)
 	if fileRemaining < 32 then -- header size
 		return 0
 	end
-	local numRead = C.libmoon_read_pcap_batch(bufs.mem, bufs.array, bufs.size, self.ptr + self.offset, fileRemaining, mempoolBufSize)
+	local numRead = C.libmoon_read_pcap_batch(bufs.mem, bufs.array, bufs.size,
+						  headerPointer(cast("pcap_hdr_t *", self.ptr)).magic_number,
+						  self.ptr + self.offset, fileRemaining, mempoolBufSize)
 	for i = 0, numRead - 1 do
 		self.offset = self.offset + bufs.array[i].pkt_len + 16
 		-- chained mbufs not supported for now
