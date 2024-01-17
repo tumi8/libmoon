@@ -473,9 +473,13 @@ local function arpTask(qs)
 			nic.ips = { nic.ips }
 		end
 
+		if(not nic.mac) then
+			nic.mac = nic.txQueue.dev:getMacString()
+		end
+
 		ipToMac[tostring(i)] = {}
 		for _, ip in pairs(nic.ips) do
-			ipToMac[tostring(i)][parseIPAddress(ip)] = nic.txQueue.dev:getMacString()
+			ipToMac[tostring(i)][parseIPAddress(ip)] = nic.mac
 		end
 		if nic.rxQueue then
 			nic.txQueue.dev:l2Filter(eth.TYPE_ARP, nic.rxQueue)
@@ -501,11 +505,11 @@ local function arpTask(qs)
 		-- send out gratuitous arp
 		if gratArpTimer:expired() then
 			gratArpTimer:reset(qs.gratArpInterval or math.huge)
-			for _, nic in ipairs(qs) do
+			for i, nic in ipairs(qs) do
 				txBufs:alloc(60)
 				local pkt = txBufs[1]:getArpPacket()
 				pkt.eth:setDstString(eth.BROADCAST)
-				local mac = nic.txQueue.dev:getMacString()
+				local mac = ipToMac[tostring(i)][parseIPAddress(nic.ips[1])] 
 				pkt.eth:setSrcString(mac)
 				pkt.arp:setOperation(arp.OP_REQUEST)
 				pkt.arp:setHardwareDstString(eth.BROADCAST)
@@ -566,7 +570,7 @@ local function arpTask(qs)
 			value.timestamp = ts
 			arpTable[ip] = value
 			ip = tonumber(ip)
-			for _, nic in ipairs(qs) do
+			for i, nic in ipairs(qs) do
 				-- TODO: do not send requests on all devices, but only the relevant
 				txBufs:alloc(60)
 				local pkt = txBufs[1]:getArpPacket()
@@ -574,7 +578,7 @@ local function arpTask(qs)
 				pkt.arp:setOperation(arp.OP_REQUEST)
 				pkt.arp:setHardwareDstString(eth.BROADCAST)
 				pkt.arp:setProtoDst(ip)
-				local mac = nic.txQueue.dev:getMacString()
+				local mac = ipToMac[tostring(i)][parseIPAddress(nic.ips[1])] 
 				pkt.eth:setSrcString(mac)
 				pkt.arp:setProtoSrc(parseIPAddress(nic.ips[1]))
 				pkt.arp:setHardwareSrcString(mac)
