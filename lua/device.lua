@@ -381,7 +381,10 @@ function mod.waitForLinks(...)
 		libmoon.sleepMillisIdle(100)
 	end
 	for i, port in ipairs(ports) do -- ports that did not come up
-		port:wait(0)
+		if (port:wait(0)) then
+			-- also include ports, which established a link between the last call to getLinkStatus and this command 
+			portsUp = portsUp + 1
+		end
 	end
 	log:info(green(portsUp == 1 and "%d device is up." or "%d devices are up.", portsUp))
 	return portsUp
