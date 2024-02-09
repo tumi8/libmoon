@@ -50,6 +50,8 @@ dev.supportsFdir  = true
 dev.useTimsyncIds = true
 dev.timeRegisters = {PRTTSYN_TIME_L, PRTTSYN_TIME_H, PRTTSYN_ADJ, PRTTSYN_ADJ_DUMMY}
 dev.crcPatch      = true
+-- device initializing takes unreasonably long sometimes
+dev.linkWaitTime = 18
 
 --- Set the maximum rate by all queues in Mbit/s.
 --- Only supported on XL710 NICs.
@@ -123,6 +125,11 @@ function dev:init()
 	self:store()
 end
 
+function dev:getLinkStatus()
+	local link = ffi.new("struct rte_eth_link")
+	dpdkc.i40e_get_link_status_workaround(self.id, link);
+	return {status = link.link_status == 1, autoneg = link.link_autoneg == 1, duplex = link.link_duplex == 1, speed = link.link_speed}
+end
 
 ffi.cdef[[
 int libmoon_i40e_reset_timecounters(uint32_t port_id);
