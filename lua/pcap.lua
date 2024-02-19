@@ -41,6 +41,10 @@ local packetPointer = ffi.typeof("pcaprec_hdr_t*")
 local voidPointer = ffi.typeof("void*")
 
 local INITIAL_FILE_SIZE = 512 * 1024 * 1024
+local TCPDUMP_MAGIC              = 0xA1B2C3D4
+local TCPDUMP_MAGIC_SWAPPED      = 0xD4C3B2A1
+local TCPDUMP_MAGIC_NANO         = 0xA1B23C4D
+local TCPDUMP_MAGIC_NANO_SWAPPED = 0x4D3CB2A1
 
 --- Set the file size for new pcap writers
 --- @param newSizeInBytes new file size in bytes
@@ -53,7 +57,7 @@ writer.__index = writer
 
 local function writeHeader(ptr)
 	local hdr = headerPointer(ptr)
-	hdr.magic_number = 0xa1b2c3d4
+	hdr.magic_number = TCPDUMP_MAGIC
 	hdr.version_major = 2
 	hdr.version_minor = 4
 	hdr.thiszone = 0
@@ -145,9 +149,9 @@ reader.__index = reader
 
 local function readHeader(ptr)
 	local hdr = headerPointer(ptr)
-	if hdr.magic_number == 0xd4c3b2a1 then
+	if hdr.magic_number == TCPDUMP_MAGIC_SWAPPED or hdr.magic_number == TCPDUMP_MAGIC_NANO_SWAPPED then
 		log:fatal("big endian pcaps are not supported")
-	elseif hdr.magic_number ~= 0xa1b2c3d4 and hdr.magic_number ~= 0xa1b23c4d then
+	elseif hdr.magic_number ~= TCPDUMP_MAGIC and hdr.magic_number ~= TCPDUMP_MAGIC_NANO then
 		log:fatal("not a pcap file")
 	end
 	if hdr.version_major ~= 2 or hdr.version_minor ~= 4 then
@@ -159,7 +163,7 @@ local function readHeader(ptr)
 	if hdr.network ~= 1 then
 		log:fatal("unsupported link layer type")
 	end
-	return ffi.sizeof(headerType)
+	return ffi.sizeof(headerType), hdr.magic_number
 end
 
 --- Create a new fast pcap reader for the given file name.
@@ -175,14 +179,14 @@ function mod:newReader(filename)
 	if not ptr then
 		log:fatal("mmap failed: %s", strError(S.errno()))
 	end
-	local offset = readHeader(ptr)
+	local offset, magic_number = readHeader(ptr)
 	ptr = cast("uint8_t*", ptr)
-	return setmetatable({fd = fd, ptr = ptr, size = size, offset = offset}, reader)
+	return setmetatable({fd = fd, ptr = ptr, size = size, offset = offset, magic_number = magic_number}, reader)
 end
 
 ffi.cdef[[
-	struct rte_mbuf* libmoon_read_pcap(struct mempool* mp, const uint32_t magic_number, const void* pcap, uint64_t remaining, uint32_t mempool_buf_size);
-	uint32_t libmoon_read_pcap_batch(struct mempool* mp, struct rte_mbuf** bufs, uint32_t num_bufs, const uint32_t magic_number, const void* pcap, uint64_t remaining, uint32_t mempool_buf_size);
+	struct rte_mbuf* libmoon_read_pcap(struct mempool* mp, const void* pcap, uint64_t remaining, uint32_t mempool_buf_size, bool nanosecond_timestamps);
+	uint32_t libmoon_read_pcap_batch(struct mempool* mp, struct rte_mbuf** bufs, uint32_t num_bufs, const void* pcap, uint64_t remaining, uint32_t mempool_buf_size, bool nanosecond_timestamps);
 ]]
 
 --- Read the next packet into a buf, the timestamp is stored in the timestamping dynfield as microseconds.
@@ -193,8 +197,8 @@ function reader:readSingle(mempool, mempoolBufSize)
 	if fileRemaining < 32 then -- header size
 		return nil
 	end
-	local buf = C.libmoon_read_pcap(mempool, headerPointer(cast("pcap_hdr_t *", self.ptr)).magic_number,
-					self.ptr + self.offset, fileRemaining, mempoolBufSize)
+	local nanosecond_timestamp = (self.magic_number == TCPDUMP_MAGIC_NANO)
+	local buf = C.libmoon_read_pcap(mempool, self.ptr + self.offset, fileRemaining, mempoolBufSize, nanosecond_timestamp)
 	if buf then
 		self.offset = self.offset + buf.pkt_len + 16
 		-- chained mbufs not supported for now
@@ -212,9 +216,8 @@ function reader:read(bufs, mempoolBufSize)
 	if fileRemaining < 32 then -- header size
 		return 0
 	end
-	local numRead = C.libmoon_read_pcap_batch(bufs.mem, bufs.array, bufs.size,
-						  headerPointer(cast("pcap_hdr_t *", self.ptr)).magic_number,
-						  self.ptr + self.offset, fileRemaining, mempoolBufSize)
+	local nanosecond_timestamp = (self.magic_number == TCPDUMP_MAGIC_NANO)
+	local numRead = C.libmoon_read_pcap_batch(bufs.mem, bufs.array, bufs.size, self.ptr + self.offset, fileRemaining, mempoolBufSize, nanosecond_timestamp)
 	for i = 0, numRead - 1 do
 		self.offset = self.offset + bufs.array[i].pkt_len + 16
 		-- chained mbufs not supported for now
