@@ -70,16 +70,16 @@ function pkt:getTimestamp(dev)
 			low = timestamp[0]
 			high = timestamp[1]
 			return high * 10^9 + low
-		elseif dev and dev.embeddedTimestampInPacket then
-			-- ice and mlx5 NICs use the timestamp dynfield
-			return tonumber(dpdkc.get_timestamp_dynfield(ffi.cast('struct rte_mbuf*', self)))
-		else
-			-- TODO: this is only tested with the Intel 82580 NIC at the moment
+		elseif dev and dev.embeddedTimestampAtStartOfBuffer then
+			-- this is only tested with the Intel 82580 NIC at the moment
 			-- the datasheet claims that low and high are swapped, but this doesn't seem to be the case
-			-- TODO: check other NICs
 			low = data[2]
 			high = data[3]
 			return high * 2^32 + low
+		elseif (not dev) or (dev and dev.embeddedTimestampInPacket) then
+			-- ice and mlx5 NICs use the timestamp dynfield
+			-- also return timestamp from dynfield in case no device is specified (e.g. in case of packets read from a pcap)
+			return tonumber(dpdkc.get_timestamp_dynfield(ffi.cast('struct rte_mbuf*', self)))
 		end
 	end
 end
