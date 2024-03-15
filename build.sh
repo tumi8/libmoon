@@ -70,7 +70,7 @@ export PKG_CONFIG_PATH=$(pwd)/deps/dpdk/x86_64-native-linux-gcc/lib/x86_64-linux
 (
 cd deps/dpdk
 CC=gcc meson setup $DEBUG_FLAGS_DPDK -Dmax_lcores=512 -Dtests=false -Ddisable_drivers=$DISABLED_DRIVERS --prefix=$(pwd)/x86_64-native-linux-gcc x86_64-native-linux-gcc
-echo "#define RTE_LIBRTE_IEEE1588 1" >> ./x86_64-native-linux-gcc/rte_build_config.h
+grep -q -x -F "#define RTE_LIBRTE_IEEE1588 1" ./x86_64-native-linux-gcc/rte_build_config.h || echo "#define RTE_LIBRTE_IEEE1588 1" >> ./x86_64-native-linux-gcc/rte_build_config.h
 ninja -C x86_64-native-linux-gcc
 ninja -C x86_64-native-linux-gcc install
 )
@@ -94,7 +94,7 @@ else
 	cd ../build
 fi
 PKG_CONFIG_PATH=$PKG_CONFIG_PATH cmake $DEBUG_FLAGS_MOONGEN ${OPTIONS}..
-PKG_CONFIG_PATH=$PKG_CONFIG_PATH make -j $NUM_CPUS
+PKG_CONFIG_PATH=$PKG_CONFIG_PATH make -j $NUM_CPUS --always-make
 )
 
 
