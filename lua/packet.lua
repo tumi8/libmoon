@@ -235,11 +235,8 @@ function pkt:offloadIPChecksum(ipv4, l2Len, l3Len)
 	if ipv4 then
 		l3Len = l3Len or 20
 		self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IPV4, dpdk.PKT_TX_IP_CKSUM)
-	else
-		l3Len = l3Len or 40
-		self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IPV4, dpdk.PKT_TX_IP_CKSUM)
+		self.tx_offload = l2Len + l3Len * 128
 	end
-	self.tx_offload = l2Len + l3Len * 128
 end
 
 --- Instruct the NIC to calculate the IP and UDP checksum for this packet.
@@ -258,7 +255,7 @@ function pkt:offloadUdpChecksum(ipv4, l2Len, l3Len)
 		dpdkc.calc_ipv4_pseudo_header_checksum(self:getData(), 20)
 	else 
 		l3Len = l3Len or 40
-		self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IPV6, dpdk.PKT_TX_IP_CKSUM, dpdk.PKT_TX_UDP_CKSUM)
+		self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IPV6, dpdk.PKT_TX_UDP_CKSUM)
 		self.tx_offload = l2Len + l3Len * 128
 		-- calculate pseudo header checksum because the NIC doesn't do this...
 		dpdkc.calc_ipv6_pseudo_header_checksum(self:getData(), 30)
@@ -281,7 +278,7 @@ function pkt:offloadTcpChecksum(ipv4, l2Len, l3Len)
 		dpdkc.calc_ipv4_pseudo_header_checksum(self:getData(), 25)
 	else 
 		l3Len = l3Len or 40
-		self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IPV6, dpdk.PKT_TX_IP_CKSUM, dpdk.PKT_TX_TCP_CKSUM)
+		self.ol_flags = bit.bor(self.ol_flags, dpdk.PKT_TX_IPV6, dpdk.PKT_TX_TCP_CKSUM)
 		self.tx_offload = l2Len + l3Len * 128
 		-- calculate pseudo header checksum because the NIC doesn't do this...
 		dpdkc.calc_ipv6_pseudo_header_checksum(self:getData(), 35)
