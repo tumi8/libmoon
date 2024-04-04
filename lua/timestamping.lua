@@ -79,13 +79,6 @@ function timestamper:measureLatency(pktSize, packetModifier, maxWait)
 	self.txBufs:alloc(pktSize)
 	local buf = self.txBufs[1]
 	buf:enableTimestamps()
-	local expectedSeq = self.seq
-	self.seq = (self.seq + 1) % 2^16
-	if self.udp then
-		buf:getUdpPtpPacket().ptp:setSequenceID(expectedSeq)
-	else
-		buf:getPtpPacket().ptp:setSequenceID(expectedSeq)
-	end
 	local skipReconfigure
 	if packetModifier then
 		skipReconfigure = packetModifier(buf)
@@ -97,6 +90,13 @@ function timestamper:measureLatency(pktSize, packetModifier, maxWait)
 		end
 		buf:getUdpPtpPacket():setLength(pktSize)
 		self.txBufs:offloadUdpChecksums()
+	end
+	local expectedSeq = self.seq
+	self.seq = (self.seq + 1) % 2^16
+	if self.udp then
+		buf:getUdpPtpPacket().ptp:setSequenceID(expectedSeq)
+	else
+		buf:getPtpPacket().ptp:setSequenceID(expectedSeq)
 	end
 	mod.syncClocks(self.txDev, self.rxDev)
 	-- clear any "leftover" timestamps
