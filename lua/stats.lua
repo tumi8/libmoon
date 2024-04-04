@@ -515,6 +515,13 @@ function pktTxCounter:countPacket(buf)
 	self.currentBytes = self.currentBytes + buf.pkt_len + 4 -- include CRC
 end
 
+
+-- count multiple identical packets
+function pktTxCounter:countPackets(buf, count)
+	self.current = self.current + count
+	self.currentBytes = self.currentBytes + (buf.pkt_len + 4) * count -- include CRC
+end
+
 function pktTxCounter:getThroughput()
 	local pkts, bytes = self.current, self.currentBytes
 	return pkts, bytes
