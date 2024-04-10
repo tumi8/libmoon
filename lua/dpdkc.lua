@@ -468,9 +468,6 @@ ffi.cdef[[
 	int iavf_config_rate_limit_port(int port, uint64_t bw, bool pps);
 	void iavf_config_rate_limit_queue(int port, int queue, uint64_t bw, bool pps);
 
-	// statistics
-	void rte_eth_stats_get(uint8_t port, struct rte_eth_stats* stats);
-
 	// debugging
 	void libmoon_ixgbe_print_timecounter_mask(uint8_t port);
 

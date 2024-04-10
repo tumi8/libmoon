@@ -406,6 +406,7 @@ function bufArray:free(n)
 	for i = 0, n - 1 do
 		if self.array[i] ~= nil then
 			dpdkc.rte_pktmbuf_free_export(self.array[i])
+			self.array[i] = nil
 		end
 	end
 end
@@ -415,6 +416,7 @@ function bufArray:freeAfter(n)
 	for i = n, self.size - 1 do
 		if self.array[i] ~= nil then
 			dpdkc.rte_pktmbuf_free_export(self.array[i])
+			self.array[i] = nil
 		end
 	end
 end

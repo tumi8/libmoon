@@ -130,6 +130,7 @@ function timestamper:measureLatency(pktSize, packetModifier, maxWait)
 							rxTs = self.rxQueue:getTimestamp(nil, timesync) 
 							if not rxTs then
 								-- can happen if you hotplug cables
+								self.rxBufs:freeAll()
 								return nil, numPkts
 							end
 						end
@@ -149,6 +150,7 @@ function timestamper:measureLatency(pktSize, packetModifier, maxWait)
 						end
 					elseif buf:hasTimestamp() and (seq == timestampedPkt or timestampedPkt == -1) then
 						-- we got a timestamp but the wrong sequence number. meh.
+						buf:free()
 						self.rxQueue:getTimestamp(nil, timesync) -- clears the register
 						-- continue, we may still get our packet :)
 					elseif seq == expectedSeq and (seq ~= timestampedPkt and timestampedPkt ~= -1) then
@@ -156,6 +158,9 @@ function timestamper:measureLatency(pktSize, packetModifier, maxWait)
 						-- we likely ran into the previous case earlier and cleared the ts register too late
 						self.rxBufs:freeAll()
 						return nil, numPkts
+					else
+						-- prevent memory leak if no timestamp was received
+						buf:free()
 					end
 				end
 			end
