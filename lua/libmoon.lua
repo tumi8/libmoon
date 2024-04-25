@@ -153,7 +153,7 @@ local function getCoreOnSocket(socket)
 		local core = mod.config.cores[i]
 		local status = dpdkc.rte_eal_get_lcore_state(core)
 		if (status == dpdkc.WAIT)
-		and (socket == nil or dpdkc.rte_lcore_to_socket_id_export(core) == socket) then
+		and (socket == nil or socket == -1 or dpdkc.rte_lcore_to_socket_id_export(core) == socket) then
 			return core
 		end
 	end
