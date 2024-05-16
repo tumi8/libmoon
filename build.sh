@@ -10,6 +10,7 @@ DISABLED_DRIVERS="net/octeontx,net/octeontx2,compress/octeontx,regex/octeontx2,b
 NO_BIND=false
 DEBUG_FLAGS_DPDK=""
 DEBUG_FLAGS_MOONGEN=""
+INCREASE_MEMORY_LIMITS_DPDK=false
 
 while :; do
 	case $1 in
@@ -34,6 +35,10 @@ while :; do
 			echo "Building Moongen with debug symbols"
 			DEBUG_FLAGS_DPDK="--buildtype=debugoptimized"
 			DEBUG_FLAGS_MOONGEN="-DCMAKE_BUILD_TYPE=RelWithDebInfo"
+			;;
+		--increaseMemoryLimits) # build DPDK with increase memory limits
+			echo "Building Moongen with increased memory limits"
+			INCREASE_MEMORY_LIMITS_DPDK=true
 			;;
 		-?*)
 			printf 'WARN: Unknown option (abort): %s\n' "$1" >&2
@@ -65,10 +70,15 @@ cd deps/dpdk-kmods/linux/igb_uio
 make -j $NUM_CPUS
 )
 
-# -Dc_args="-DRTE_LIBRTE_ICE_16BYTE_RX_DESC" 
 export PKG_CONFIG_PATH=$(pwd)/deps/dpdk/x86_64-native-linux-gcc/lib/x86_64-linux-gnu/pkgconfig/:$PKG_CONFIG_PATH
 (
 cd deps/dpdk
+if ${INCREASE_MEMORY_LIMITS_DPDK}; then
+	grep -q -x -F "#define RTE_MAX_MEMSEG_PER_LIST 16384" ./config/rte_config.h || sed -i 's/RTE_MAX_MEMSEG_PER_LIST 8192/RTE_MAX_MEMSEG_PER_LIST 16384/' ./config/rte_config.h
+	grep -q -x -F "#define RTE_MAX_MEM_MB_PER_LIST 524288" ./config/rte_config.h || sed -i 's/RTE_MAX_MEM_MB_PER_LIST 32768/RTE_MAX_MEM_MB_PER_LIST 524288/' ./config/rte_config.h
+	grep -q -x -F "#define RTE_MAX_MEMSEG_PER_TYPE 524288" ./config/rte_config.h || sed -i 's/RTE_MAX_MEMSEG_PER_TYPE 32768/RTE_MAX_MEMSEG_PER_TYPE 524288/' ./config/rte_config.h
+	grep -q -x -F "#define RTE_MAX_MEM_MB_PER_TYPE 1048576" ./config/rte_config.h || sed -i 's/RTE_MAX_MEM_MB_PER_TYPE 65536/RTE_MAX_MEM_MB_PER_TYPE 1048576/' ./config/rte_config.h
+fi
 CC=gcc meson setup $DEBUG_FLAGS_DPDK -Dmax_lcores=512 -Dtests=false -Ddisable_drivers=$DISABLED_DRIVERS --prefix=$(pwd)/x86_64-native-linux-gcc x86_64-native-linux-gcc
 grep -q -x -F "#define RTE_LIBRTE_IEEE1588 1" ./x86_64-native-linux-gcc/rte_build_config.h || echo "#define RTE_LIBRTE_IEEE1588 1" >> ./x86_64-native-linux-gcc/rte_build_config.h
 ninja -C x86_64-native-linux-gcc
@@ -87,8 +97,7 @@ fi
 )
 
 (
-if ! ${MOON}
-then
+if ! ${MOON}; then
 	cd build
 else	
 	cd ../build
@@ -98,8 +107,7 @@ PKG_CONFIG_PATH=$PKG_CONFIG_PATH make -j $NUM_CPUS --always-make
 )
 
 
-if ! ${NO_BIND}
-then
+if ! ${NO_BIND}; then
 	echo Trying to bind interfaces, this will fail if you are not root
 	echo Try "sudo ./bind-interfaces.sh" if this step fails
 	./bind-interfaces.sh ${FLAGS}
