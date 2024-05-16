@@ -74,10 +74,10 @@ export PKG_CONFIG_PATH=$(pwd)/deps/dpdk/x86_64-native-linux-gcc/lib/x86_64-linux
 (
 cd deps/dpdk
 if ${INCREASE_MEMORY_LIMITS_DPDK}; then
-	grep -q -x -F "#define RTE_MAX_MEMSEG_PER_LIST 16384" ./config/rte_config.h || sed -i 's/RTE_MAX_MEMSEG_PER_LIST 8192/RTE_MAX_MEMSEG_PER_LIST 16384/' ./config/rte_config.h
-	grep -q -x -F "#define RTE_MAX_MEM_MB_PER_LIST 524288" ./config/rte_config.h || sed -i 's/RTE_MAX_MEM_MB_PER_LIST 32768/RTE_MAX_MEM_MB_PER_LIST 524288/' ./config/rte_config.h
-	grep -q -x -F "#define RTE_MAX_MEMSEG_PER_TYPE 524288" ./config/rte_config.h || sed -i 's/RTE_MAX_MEMSEG_PER_TYPE 32768/RTE_MAX_MEMSEG_PER_TYPE 524288/' ./config/rte_config.h
-	grep -q -x -F "#define RTE_MAX_MEM_MB_PER_TYPE 1048576" ./config/rte_config.h || sed -i 's/RTE_MAX_MEM_MB_PER_TYPE 65536/RTE_MAX_MEM_MB_PER_TYPE 1048576/' ./config/rte_config.h
+	grep -q -F "RTE_MAX_MEMSEG_PER_LIST 16384" ./config/rte_config.h || sed -i 's/RTE_MAX_MEMSEG_PER_LIST 8192/RTE_MAX_MEMSEG_PER_LIST 16384/' ./config/rte_config.h
+	grep -q -F "RTE_MAX_MEM_MB_PER_LIST 524288" ./config/rte_config.h || sed -i 's/RTE_MAX_MEM_MB_PER_LIST 32768/RTE_MAX_MEM_MB_PER_LIST 524288/' ./config/rte_config.h
+	grep -q -F "RTE_MAX_MEMSEG_PER_TYPE 524288" ./config/rte_config.h || sed -i 's/RTE_MAX_MEMSEG_PER_TYPE 32768/RTE_MAX_MEMSEG_PER_TYPE 524288/' ./config/rte_config.h
+	grep -q -F "RTE_MAX_MEM_MB_PER_TYPE 1048576" ./config/rte_config.h || sed -i 's/RTE_MAX_MEM_MB_PER_TYPE 65536/RTE_MAX_MEM_MB_PER_TYPE 1048576/' ./config/rte_config.h
 fi
 CC=gcc meson setup $DEBUG_FLAGS_DPDK -Dmax_lcores=512 -Dtests=false -Ddisable_drivers=$DISABLED_DRIVERS --prefix=$(pwd)/x86_64-native-linux-gcc x86_64-native-linux-gcc
 grep -q -x -F "#define RTE_LIBRTE_IEEE1588 1" ./x86_64-native-linux-gcc/rte_build_config.h || echo "#define RTE_LIBRTE_IEEE1588 1" >> ./x86_64-native-linux-gcc/rte_build_config.h
