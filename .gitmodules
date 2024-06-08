@@ -5,7 +5,7 @@
 	branch = v2.1
 [submodule "deps/dpdk"]
 	path = deps/dpdk
-	url = https://pos:TswyWZzbgizZSHyjP9oo@gitlab.lrz.de/idp-lachnit/dpdk
+	url = https://gitlab+deploy-token-1809:gldt-przaesczpuEAKzifh8TT@gitlab.lrz.de/idp-lachnit/dpdk
 	ignore = untracked
 	branch = v22.11-libmoon
 [submodule "deps/pciids"]
