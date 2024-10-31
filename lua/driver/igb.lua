@@ -71,7 +71,12 @@ function dev:hasRxTimestamp()
 	if bit.band(dpdkc.read_reg32(self.id, TSYNCRXCTL), TSYNCRXCTL_RXTT) == 0 then
 		return nil
 	end
-	return bswap16(bit.rshift(dpdkc.read_reg32(self.id, RXSATRH), 16))
+	
+	return -1
+	
+	-- reading the id from the timestamped packet does not seem to work in the current implementation
+	-- "temporarily" disabling it
+	--return bswap16(bit.rshift(dpdkc.read_reg32(self.id, RXSATRH), 16))
 end
 
 function dev:filterL2Timestamps(queue)
