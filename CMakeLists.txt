@@ -12,7 +12,6 @@ SET(FILES
 	src/device.c
 	src/i40e.c
 	src/ice.c
-	src/iavf.c
 	src/util.c
 	src/lifecycle.cpp
 	src/barrier.cpp

@@ -775,25 +775,6 @@ function txQueue:setRate(rate, pktSize)
 			dpdkc.ice_set_q_bw_limit(self.dev.id, self.qid, math.floor(1000*tonumber(bwLimit)+0.5))
 		end
 		return
-
-	-- dpdk does not implement per queue rate limiting for e810 VFs, so use a custom implementation
-	elseif(self.dev.e810_vf) then
-		if not dpdkc.iavf_modified_driver_detected(self.id) then
-			log:warn("rate limiting for E810 VFs requires a modified version of the PF driver and is not supported on X700 VFs")
-			return
-		end
-		
-		local bwLimit = rate
-
-		-- The rate, which is printed by the stats task does not match the rate, which is set in the rate limiting function.
-		-- Therfore we added a correction function
-		if pktSize ~= nil then
-			bwLimit =  ((bwLimit * 1e6) / ((pktSize+4)*8)) * 2 * 1000 / 1024
-			dpdkc.iavf_config_rate_limit_queue(self.dev.id, self.qid, math.floor(bwLimit+0.5), true)
-		else
-			dpdkc.iavf_config_rate_limit_queue(self.dev.id, self.qid, 1000*tonumber(bwLimit), false)
-		end
-		return
 	end
 
 	local rc = dpdkc.rte_eth_set_queue_rate_limit(self.id, self.qid, rate)
