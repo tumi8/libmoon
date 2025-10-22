@@ -1,16 +1,16 @@
 [submodule "deps/luajit"]
 	path = deps/luajit
-	url = https://moongen:gldt-41G4K54jJXLqeGHrB1Qh@gitlab.lrz.de/moongen/LuaJIT.git
+	url = https://github.com/tumi8/LuaJIT
 	ignore = untracked
 	branch = v2.1
 [submodule "deps/dpdk"]
 	path = deps/dpdk
-	url = https://moongen:gldt-41G4K54jJXLqeGHrB1Qh@gitlab.lrz.de/moongen/dpdk.git
+	url = https://github.com/tumi8/dpdk
 	ignore = untracked
 	branch = v22.11-libmoon
 [submodule "deps/pciids"]
 	path = deps/pciids
-	url = https://moongen:gldt-41G4K54jJXLqeGHrB1Qh@gitlab.lrz.de/moongen/pciids.git
+	url = https://github.com/tumi8/pciids
 	ignore = untracked
 	branch = master
 [submodule "lua/lib/syscall"]
