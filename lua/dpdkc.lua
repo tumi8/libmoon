@@ -453,6 +453,7 @@ ffi.cdef[[
 	void ice_reset_timer(int port);
 	uint64_t ice_read_current_timer(int port);
 	void ice_take_timer_ownership(int port);
+	void ice_keep_link_up(int port);
 
 	int filterUdpTimestamps(int dev, int queueID, struct rte_flow_error* error);
 

@@ -10,6 +10,11 @@
 #include <ice_rxtx.h>
 #include <ice_ptp_hw.h>
 
+void ice_keep_link_up(int port){
+	struct ice_pf *pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
+	pf->init_link_up = true;
+}
+
 void ice_take_timer_ownership(int port){
 	struct ice_hw *hw;
 	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);

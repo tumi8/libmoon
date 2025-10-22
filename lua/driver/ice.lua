@@ -21,6 +21,10 @@ dev.packetOverhead				= 24 --byte
 dev.maxPacketRate				= 30 --Mpps
 dev.lineRate 					= 100 --Gbps
 
+function dev:init()
+	dpdkc.ice_keep_link_up(self.id)
+end
+
 -- set global rate liming
 function dev:setRate(rate, pktSize)
 	local bwLimit = rate
