@@ -10,9 +10,105 @@
 #include <ice_rxtx.h>
 #include <ice_ptp_hw.h>
 
+#include <math.h>
+
 void ice_keep_link_up(int port){
 	struct ice_pf *pf = ICE_DEV_PRIVATE_TO_PF(rte_eth_devices[port].data->dev_private);
 	pf->init_link_up = true;
+}
+
+// Copied and modified code from ice_ethtool.c from the ice Linux driver 1.7.16
+/**
+ * ice_get_module_eeprom - fill buffer with SFF EEPROM contents
+ * @netdev: network interface device structure
+ * @ee: EEPROM dump request structure
+ * @data: buffer to be filled with EEPROM contents
+ */
+static int ice_get_module_eeprom(struct ice_hw *hw, u32 ee_offset, u32 ee_len, u8 *data){
+#define SFF_READ_BLOCK_SIZE 8
+#define ICE_I2C_EEPROM_DEV_ADDR		0xA0
+#define ICE_I2C_EEPROM_DEV_ADDR2	0xA2
+#define ICE_MODULE_TYPE_SFP		0x03
+#define ETH_MODULE_SFF_8079_LEN		256
+#define ETH_MODULE_SFF_8436_LEN		256
+	u8 value[SFF_READ_BLOCK_SIZE] = {0};
+	u8 addr = ICE_I2C_EEPROM_DEV_ADDR;
+	enum ice_status status;
+	bool is_sfp = false;
+	unsigned int i, j;
+	u16 offset = 0;
+	u8 page = 0;
+
+	if (!ee_len || !data)
+		return -EINVAL;
+
+	status = ice_aq_sff_eeprom(hw, 0, addr, offset, page, 0, value, 1, 0,
+				   NULL);
+	if (status)
+		return -EIO;
+
+	if (value[0] == ICE_MODULE_TYPE_SFP)
+		is_sfp = true;
+
+	memset(data, 0, ee_len);
+	for (i = 0; i < ee_len; i += SFF_READ_BLOCK_SIZE) {
+		offset = i + ee_offset;
+		page = 0;
+
+		/* Check if we need to access the other memory page */
+		if (is_sfp) {
+			if (offset >= ETH_MODULE_SFF_8079_LEN) {
+				offset -= ETH_MODULE_SFF_8079_LEN;
+				addr = ICE_I2C_EEPROM_DEV_ADDR2;
+			}
+		} else {
+			while (offset >= ETH_MODULE_SFF_8436_LEN) {
+				/* Compute memory page number and offset. */
+				offset -= ETH_MODULE_SFF_8436_LEN / 2;
+				page++;
+			}
+		}
+
+		/* Bit 2 of eeprom address 0x02 declares upper
+		 * pages are disabled on QSFP modules.
+		 * SFP modules only ever use page 0.
+		 */
+		if (page == 0 || !(data[0x2] & 0x4)) {
+			/* If i2c bus is busy due to slow page change or
+			 * link management access, call can fail. This is normal.
+			 * So we retry this a few times.
+			 */
+			for (j = 0; j < 4; j++) {
+				status = ice_aq_sff_eeprom(hw, 0, addr, offset, page,
+							   !is_sfp, value,
+							   SFF_READ_BLOCK_SIZE,
+							   0, NULL);
+				if (status) {
+					usleep_range(1500, 2500);
+					memset(value, 0, SFF_READ_BLOCK_SIZE);
+					continue;
+				}
+				break;
+			}
+
+			/* Make sure we have enough room for the new block */
+			if ((i + SFF_READ_BLOCK_SIZE) <= ee_len)
+				memcpy(data + i, value, SFF_READ_BLOCK_SIZE);
+		}
+	}
+	return 0;
+}
+// End of copied code
+
+float ice_get_qsfp_temp(int port){
+	struct ice_hw *hw;
+	u8 data[8];
+
+	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
+
+	// temperature offset and format specified in https://members.snia.org/document/dl/26418
+	if(ice_get_module_eeprom(hw, 96+256, 8, data) != 0)return NAN;
+	return (256*data[0]+data[1]) / 256.0f;
 }
 
 void ice_take_timer_ownership(int port){

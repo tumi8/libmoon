@@ -468,6 +468,9 @@ ffi.cdef[[
 
 	// i40e link status workaround for intel x710/x557 NICs
 	void i40e_get_link_status_workaround(int port, struct rte_eth_link* link);
+
+	// ice transceiver temperature
+	void record_temperature(int port);
 ]]
 
 return ffi.C
