@@ -9,7 +9,9 @@ local ffi = require "ffi"
 
 -- structs
 ffi.cdef[[
-	// core management
+	/**
+	* State of an lcore.
+	*/
 	enum rte_lcore_state_t {
 		WAIT,
 		/**< waiting for new command */
@@ -21,15 +23,15 @@ ffi.cdef[[
 		/** No error handling modes are supported. */
 		RTE_ETH_ERROR_HANDLE_MODE_NONE,
 		/** Passive error handling, after the PMD detects that a reset is required,
-		 * the PMD reports @see RTE_ETH_EVENT_INTR_RESET event,
-		 * and the application invokes @see rte_eth_dev_reset to recover the port.
-		 */
+		* the PMD reports @see RTE_ETH_EVENT_INTR_RESET event,
+		* and the application invokes @see rte_eth_dev_reset to recover the port.
+		*/
 		RTE_ETH_ERROR_HANDLE_MODE_PASSIVE,
 		/** Proactive error handling, after the PMD detects that a reset is required,
-		 * the PMD reports @see RTE_ETH_EVENT_ERR_RECOVERING event,
-		 * do recovery internally, and finally reports the recovery result event
-		 * (@see RTE_ETH_EVENT_RECOVERY_*).
-		 */
+		* the PMD reports @see RTE_ETH_EVENT_ERR_RECOVERING event,
+		* do recovery internally, and finally reports the recovery result event
+		* (@see RTE_ETH_EVENT_RECOVERY_*).
+		*/
 		RTE_ETH_ERROR_HANDLE_MODE_PROACTIVE,
 	};
 
@@ -55,6 +57,7 @@ ffi.cdef[[
 		/**< Color. @see enum rte_color.*/
 		uint16_t reserved;   /**< Reserved. */
 	}; /**< Hierarchical scheduler */
+	
 	struct rte_mbuf_ext_shared_info {
 		rte_mbuf_extbuf_free_callback_t free_cb; /**< Free callback function */
 		void *fcb_opaque;                        /**< Free callback argument */
@@ -62,120 +65,165 @@ ffi.cdef[[
 	};
 	
 	struct rte_mbuf {
-		RTE_MARKER cacheline0;
-	
 		void *buf_addr;           /**< Virtual address of segment buffer. */
-		
 		/**
 		* Next segment of scattered packet.
 		* This field is valid when physical address field is undefined.
 		* Otherwise next pointer in the second cache line will be used.
 		*/
 		struct rte_mbuf *next;
-	
-		/* next 8 bytes are initialised on RX descriptor rearm */
-		RTE_MARKER64 rearm_data;
-		uint16_t data_off;
-	
-		/**
-		 * Reference counter. Its size should at least equal to the size
-		 * of port field (16 bits), to support zero-copy broadcast.
-		 * It should only be accessed using the following functions:
-		 * rte_mbuf_refcnt_update(), rte_mbuf_refcnt_read(), and
-		 * rte_mbuf_refcnt_set(). The functionality of these functions (atomic,
-		 * or non-atomic) is controlled by the RTE_MBUF_REFCNT_ATOMIC flag.
-		 */
-		uint16_t refcnt;
-		uint16_t nb_segs;         /**< Number of segments. */
-	
-		/** Input port (16 bits to support more than 256 virtual ports).
-		 * The event eth Tx adapter uses this field to specify the output port.
-		 */
-		uint16_t port;
-	
-		uint64_t ol_flags;        /**< Offload features. */
-	
-		/* remaining bytes are set on RX when pulling packet from descriptor */
-		RTE_MARKER rx_descriptor_fields1;
-	
+
 		/*
-		 * The packet type, which is the combination of outer/inner L2, L3, L4
-		 * and tunnel types. The packet_type is about data really present in the
-		 * mbuf. Example: if vlan stripping is enabled, a received vlan packet
-		 * would have RTE_PTYPE_L2_ETHER and not RTE_PTYPE_L2_VLAN because the
-		 * vlan is stripped from the data.
-		 */
-		uint32_t packet_type; /**< L2/L3/L4 and tunnel information. */
-			
-	
-		uint32_t pkt_len;         /**< Total pkt len: sum of all segments. */
-		uint16_t data_len;        /**< Amount of data in segment buffer. */
-		/** VLAN TCI (CPU order), valid if PKT_RX_VLAN is set. */
-		uint16_t vlan_tci;
-	
+		* Next 8 bytes are initialised on Rx descriptor rearm,
+		* or on Rx when pulling packet from descriptor.
+		*/
 		union {
-			union {
-				uint32_t rss;     /**< RSS hash result if RSS enabled */
-				struct {
-					union {
-						struct {
-							uint16_t hash;
-							uint16_t id;
-						};
-						uint32_t lo;
-						/**< Second 4 flexible bytes */
-					};
-					uint32_t hi;
-					/**< First 4 flexible bytes or FD ID, dependent
-					 * on PKT_RX_FDIR_* flag in ol_flags.
-					 */
-				} fdir;	/**< Filter identifier if FDIR enabled */
-				struct rte_mbuf_sched sched;
-				/**< Hierarchical scheduler : 8 bytes */
-				struct {
-					uint32_t reserved1;
-					uint16_t reserved2;
-					uint16_t txq;
-					/**< The event eth Tx adapter uses this field
-					 * to store Tx queue id.
-					 * @see rte_event_eth_tx_adapter_txq_set()
-					 */
-				} txadapter; /**< Eventdev ethdev Tx adapter */
-				/**< User defined tags. See rte_distributor_process() */
-				uint32_t usr;
-			} hash;                   /**< hash information */
+			uint64_t rearm_data[1];
+			struct {
+				uint16_t data_off;
+
+				/**
+				* Reference counter. Its size should at least equal to the size
+				* of port field (16 bits), to support zero-copy broadcast.
+				* It should only be accessed using the following functions:
+				* rte_mbuf_refcnt_update(), rte_mbuf_refcnt_read(), and
+				* rte_mbuf_refcnt_set(). The functionality of these functions (atomic,
+				* or non-atomic) is controlled by the RTE_MBUF_REFCNT_ATOMIC flag.
+				*/
+				uint16_t refcnt;
+
+				/**
+				* Number of segments. Only valid for the first segment of an mbuf
+				* chain.
+				*/
+				uint16_t nb_segs;
+
+				/** Input port (16 bits to support more than 256 virtual ports).
+				* The event eth Tx adapter uses this field to specify the output port.
+				*/
+				uint16_t port;
+			};
 		};
-	
-		/** Outer VLAN TCI (CPU order), valid if PKT_RX_QINQ is set. */
-		uint16_t vlan_tci_outer;
-	
-		uint16_t buf_len;         /**< Length of segment buffer. */
-	
+
+		uint64_t ol_flags;        /**< Offload features. */
+
+		/* Remaining 24 bytes are set on Rx when pulling packet from descriptor. */
+		union {
+			/* void * type of the array elements is retained for driver compatibility. */
+			void *rx_descriptor_fields1[24 / sizeof(void *)];
+			struct {
+				/*
+				* The packet type, which is the combination of outer/inner L2, L3, L4
+				* and tunnel types. The packet_type is about data really present in the
+				* mbuf. Example: if vlan stripping is enabled, a received vlan packet
+				* would have RTE_PTYPE_L2_ETHER and not RTE_PTYPE_L2_VLAN because the
+				* vlan is stripped from the data.
+				*/
+				union {
+					uint32_t packet_type; /**< L2/L3/L4 and tunnel information. */
+					struct {
+						uint8_t l2_type:4;   /**< (Outer) L2 type. */
+						uint8_t l3_type:4;   /**< (Outer) L3 type. */
+						uint8_t l4_type:4;   /**< (Outer) L4 type. */
+						uint8_t tun_type:4;  /**< Tunnel type. */
+						union {
+							uint8_t inner_esp_next_proto;
+							/**< ESP next protocol type, valid if
+							* RTE_PTYPE_TUNNEL_ESP tunnel type is set
+							* on both Tx and Rx.
+							*/
+							struct {
+								uint8_t inner_l2_type:4;
+								/**< Inner L2 type. */
+								uint8_t inner_l3_type:4;
+								/**< Inner L3 type. */
+							};
+						};
+						uint8_t inner_l4_type:4; /**< Inner L4 type. */
+					};
+				};
+
+				uint32_t pkt_len;         /**< Total pkt len: sum of all segments. */
+				uint16_t data_len;        /**< Amount of data in segment buffer. */
+				/** VLAN TCI (CPU order), valid if RTE_MBUF_F_RX_VLAN is set. */
+				uint16_t vlan_tci;
+
+				union {
+					union {
+						uint32_t rss;     /**< RSS hash result if RSS enabled */
+						struct {
+							union {
+								struct {
+									uint16_t hash;
+									uint16_t id;
+								};
+								uint32_t lo;
+								/**< Second 4 flexible bytes */
+							};
+							uint32_t hi;
+							/**< First 4 flexible bytes or FD ID, dependent
+							* on RTE_MBUF_F_RX_FDIR_* flag in ol_flags.
+							*/
+						} fdir;	/**< Filter identifier if FDIR enabled */
+						struct rte_mbuf_sched sched;
+						/**< Hierarchical scheduler : 8 bytes */
+						struct {
+							uint32_t reserved1;
+							uint16_t reserved2;
+							uint16_t txq;
+							/**< The event eth Tx adapter uses this field
+							* to store Tx queue id.
+							* @see rte_event_eth_tx_adapter_txq_set()
+							*/
+						} txadapter; /**< Eventdev ethdev Tx adapter */
+						uint32_t usr;
+						/**< User defined tags. See rte_distributor_process() */
+					} hash;                   /**< hash information */
+				};
+
+				/** Outer VLAN TCI (CPU order), valid if RTE_MBUF_F_RX_QINQ is set. */
+				uint16_t vlan_tci_outer;
+
+				uint16_t buf_len;         /**< Length of segment buffer. */
+			};
+		};
+
 		struct rte_mempool *pool; /**< Pool from which mbuf was allocated. */
-	
-		/* second cache line - fields only used in slow path or on TX */
-		RTE_MARKER cacheline1 __attribute__((aligned(64)));
-	
-		uint64_t dynfield2;    /**< Next segment of scattered packet. */
-	
+
+		/*
+		* Second cache line - fields only used in slow path or on Tx.
+		* In special cases, some of these fields are also set on Rx,
+		* most notably the 'next' field is set on Rx scattered packets.
+		*/
+
+		/**
+		* Reserved for dynamic fields
+		* when the next pointer is in first cache line (i.e. RTE_IOVA_IN_MBUF is 0).
+		*/
+		// alignas(RTE_CACHE_LINE_MIN_SIZE)
+		uint64_t dynfield2;
+
 		/* fields to support TX offloads */
-		uint64_t tx_offload;       /**< combined for easy fetch */
-	
+		union {
+			uint64_t tx_offload;       /**< combined for easy fetch */
+		};
+
 		/** Shared data for external buffer attached to mbuf. See
-		 * rte_pktmbuf_attach_extbuf().
-		 */
+		* rte_pktmbuf_attach_extbuf().
+		*/
 		struct rte_mbuf_ext_shared_info *shinfo;
-	
+
 		/** Size of the application private data. In case of an indirect
-		 * mbuf, it stores the direct mbuf private data size.
-		 */
+		* mbuf, it stores the direct mbuf private data size.
+		*/
 		uint16_t priv_size;
-	
+
 		/** Timesync flags for use with IEEE1588. */
 		uint16_t timesync;
-	
+
 		uint32_t dynfield1[9]; /**< Reserved for dynamic fields. */
 	} __attribute__((aligned(64)));
+
 
 	// device status/info
 	struct rte_eth_link {
@@ -183,7 +231,8 @@ ffi.cdef[[
 		uint16_t link_duplex: 1;
 		uint16_t link_autoneg: 1;
 		uint16_t link_status: 1;
-	} __attribute__((aligned(8)));
+		uint16_t link_connector : 6;
+	};
 
 	struct rte_eth_desc_lim {
 		uint16_t nb_max;   
@@ -268,49 +317,64 @@ ffi.cdef[[
 	};
 
 	struct rte_eth_dev_info {
-		void* device; /** Generic device information */
+		struct rte_device *device; /**< Generic device information */
 		const char *driver_name; /**< Device Driver name. */
 		unsigned int if_index; /**< Index to bound host interface, or 0 if none.
 			Use if_indextoname() to translate into an interface name. */
 		uint16_t min_mtu;	/**< Minimum MTU allowed */
 		uint16_t max_mtu;	/**< Maximum MTU allowed */
 		const uint32_t *dev_flags; /**< Device flags */
-		uint32_t min_rx_bufsize; /**< Minimum size of RX buffer. */
-		uint32_t max_rx_pktlen; /**< Maximum configurable length of RX pkt. */
+		/** Minimum Rx buffer size per descriptor supported by HW. */
+		uint32_t min_rx_bufsize;
+		/**
+		* Maximum Rx buffer size per descriptor supported by HW.
+		* The value is not enforced, information only to application to
+		* optimize mbuf size.
+		* Its value is UINT32_MAX when not specified by the driver.
+		*/
+		uint32_t max_rx_bufsize;
+		uint32_t max_rx_pktlen; /**< Maximum configurable length of Rx pkt. */
 		/** Maximum configurable size of LRO aggregated packet. */
 		uint32_t max_lro_pkt_size;
-		uint16_t max_rx_queues; /**< Maximum number of RX queues. */
-		uint16_t max_tx_queues; /**< Maximum number of TX queues. */
+		uint16_t max_rx_queues; /**< Maximum number of Rx queues. */
+		uint16_t max_tx_queues; /**< Maximum number of Tx queues. */
 		uint32_t max_mac_addrs; /**< Maximum number of MAC addresses. */
-		uint32_t max_hash_mac_addrs;
 		/** Maximum number of hash MAC addresses for MTA and UTA. */
+		uint32_t max_hash_mac_addrs;
 		uint16_t max_vfs; /**< Maximum number of VFs. */
 		uint16_t max_vmdq_pools; /**< Maximum number of VMDq pools. */
 		struct rte_eth_rxseg_capa rx_seg_capa; /**< Segmentation capability.*/
+		/** All Rx offload capabilities including all per-queue ones */
 		uint64_t rx_offload_capa;
-		/**< All RX offload capabilities including all per-queue ones */
+		/** All Tx offload capabilities including all per-queue ones */
 		uint64_t tx_offload_capa;
-		/**< All TX offload capabilities including all per-queue ones */
+		/** Device per-queue Rx offload capabilities. */
 		uint64_t rx_queue_offload_capa;
-		/**< Device per-queue RX offload capabilities. */
+		/** Device per-queue Tx offload capabilities. */
 		uint64_t tx_queue_offload_capa;
-		/**< Device per-queue TX offload capabilities. */
+		/** Device redirection table size, the total number of entries. */
 		uint16_t reta_size;
-		/**< Device redirection table size, the total number of entries. */
 		uint8_t hash_key_size; /**< Hash key size in bytes */
+		uint32_t rss_algo_capa; /** RSS hash algorithms capabilities */
 		/** Bit mask of RSS offloads, the bit offset also means flow type */
 		uint64_t flow_type_rss_offloads;
-		struct rte_eth_rxconf default_rxconf; /**< Default RX configuration */
-		struct rte_eth_txconf default_txconf; /**< Default TX configuration */
-		uint16_t vmdq_queue_base; /**< First queue ID for VMDQ pools. */
-		uint16_t vmdq_queue_num;  /**< Queue number for VMDQ pools. */
-		uint16_t vmdq_pool_base;  /**< First ID of VMDQ pools. */
-		struct rte_eth_desc_lim rx_desc_lim;  /**< RX descriptors limits */
-		struct rte_eth_desc_lim tx_desc_lim;  /**< TX descriptors limits */
-		uint32_t speed_capa;  /**< Supported speeds bitmap (ETH_LINK_SPEED_). */
-		/** Configured number of rx/tx queues */
-		uint16_t nb_rx_queues; /**< Number of RX queues. */
-		uint16_t nb_tx_queues; /**< Number of TX queues. */
+		struct rte_eth_rxconf default_rxconf; /**< Default Rx configuration */
+		struct rte_eth_txconf default_txconf; /**< Default Tx configuration */
+		uint16_t vmdq_queue_base; /**< First queue ID for VMDq pools. */
+		uint16_t vmdq_queue_num;  /**< Queue number for VMDq pools. */
+		uint16_t vmdq_pool_base;  /**< First ID of VMDq pools. */
+		struct rte_eth_desc_lim rx_desc_lim;  /**< Rx descriptors limits */
+		struct rte_eth_desc_lim tx_desc_lim;  /**< Tx descriptors limits */
+		uint32_t speed_capa;  /**< Supported speeds bitmap (RTE_ETH_LINK_SPEED_). */
+		/** Configured number of Rx/Tx queues */
+		uint16_t nb_rx_queues; /**< Number of Rx queues. */
+		uint16_t nb_tx_queues; /**< Number of Tx queues. */
+		/**
+		* Maximum number of Rx mempools supported per Rx queue.
+		*
+		* Value greater than 0 means that the driver supports Rx queue
+		* mempools specification via rx_conf->rx_mempools.
+		*/
 		uint16_t max_rx_mempools;
 		/** Rx parameter recommendations */
 		struct rte_eth_dev_portconf default_rxportconf;
@@ -323,6 +387,7 @@ ffi.cdef[[
 			* embedded managed interconnect/switch.
 			*/
 		struct rte_eth_switch_info switch_info;
+		/** Supported error handling mode. */
 		enum rte_eth_err_handle_mode err_handle_mode;
 
 		uint64_t reserved_64s[2]; /**< Reserved for future fields */
