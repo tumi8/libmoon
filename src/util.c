@@ -99,7 +99,7 @@ static inline uint16_t get_ipv6_psd_sum (struct rte_ipv6_hdr * ip_hdr)
 		uint16_t u16_arr[0]; /* allow use as 16-bit values with safe aliasing */
 	} psd_hdr;
 
-	rte_memcpy(&psd_hdr.src_addr, ip_hdr->src_addr, 
+	rte_memcpy(&psd_hdr.src_addr, &ip_hdr->src_addr, 
 			sizeof(ip_hdr->src_addr) + sizeof(ip_hdr->dst_addr));
 	psd_hdr.len       = ip_hdr->payload_len;
 	psd_hdr.proto     = (ip_hdr->proto << 24);

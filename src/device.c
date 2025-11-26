@@ -75,7 +75,12 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 	bool is_igb_device = strcmp("net_e1000_igb", driver) == 0;
 	bool is_mlx5_device = strcmp("mlx5_pci", driver) == 0;
 	struct rte_eth_dev_info dev_info;
-	rte_eth_dev_info_get(cfg->port, &dev_info);
+	int rc = rte_eth_dev_info_get(cfg->port, &dev_info);
+	if (rc) {
+		printf("could not get eth_dev info\n");
+		return rc;
+	}
+
 
 	struct rte_eth_rss_conf rss_conf = {
 		.rss_key = cfg->enable_rss_symm ? symm_rss_hash_key : NULL,
@@ -118,7 +123,7 @@ int dpdk_configure_device(struct libmoon_device_config* cfg) {
 		memset(&port_conf.rx_adv_conf, 0, sizeof(port_conf.rx_adv_conf));
 	}
 
-	int rc = rte_eth_dev_configure(cfg->port, cfg->rx_queues, cfg->tx_queues, &port_conf);
+	rc = rte_eth_dev_configure(cfg->port, cfg->rx_queues, cfg->tx_queues, &port_conf);
 	if (rc) return rc;
 
 	struct rte_eth_txconf tx_conf = dev_info.default_txconf;
@@ -156,7 +161,11 @@ void* dpdk_get_eth_dev(int port) {
 
 int dpdk_get_pci_function(int port) {
 	struct rte_eth_dev_info dev_info;
-	rte_eth_dev_info_get(port, &dev_info);
+	int rc = rte_eth_dev_info_get(port, &dev_info);
+	if (rc) {
+		printf("could not get eth_dev info\n");
+		return 0;
+	}
 	if (RTE_DEV_TO_PCI(dev_info.device)) {
 		return RTE_DEV_TO_PCI(dev_info.device)->addr.function;
 	} else {
@@ -166,7 +175,11 @@ int dpdk_get_pci_function(int port) {
 
 const char* dpdk_get_driver_name(int port) {
 	struct rte_eth_dev_info dev_info;
-	rte_eth_dev_info_get(port, &dev_info);
+	int rc = rte_eth_dev_info_get(port, &dev_info);
+	if (rc) {
+		printf("could not get eth_dev info\n");
+		return "";
+	}
 	return dev_info.driver_name;
 }
 
@@ -181,7 +194,11 @@ uint64_t dpdk_get_mac_addr(int port, char* buf) {
 
 uint32_t dpdk_get_pci_id(uint16_t port) {
 	struct rte_eth_dev_info dev_info;
-	rte_eth_dev_info_get(port, &dev_info);
+	int rc =  rte_eth_dev_info_get(port, &dev_info);
+	if (rc) {
+		printf("could not get eth_dev info\n");
+		return 0;
+	}
 	if (!RTE_DEV_TO_PCI(dev_info.device)) {
 		return 0;
 	}
@@ -190,7 +207,11 @@ uint32_t dpdk_get_pci_id(uint16_t port) {
 
 uint8_t dpdk_get_socket(uint16_t port) {
 	struct rte_eth_dev_info dev_info;
-	rte_eth_dev_info_get(port, &dev_info);
+	int rc = rte_eth_dev_info_get(port, &dev_info);
+	if (rc) {
+		printf("could not get eth_dev info\n");
+		return 0;
+	}
 	if (!RTE_DEV_TO_PCI(dev_info.device)) {
 		return 0;
 	}

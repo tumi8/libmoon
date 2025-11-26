@@ -51,16 +51,16 @@ INCLUDE_DIRECTORIES(
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/lib/ethdev
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/lib/eal/include
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/bnxt
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ixgbe/base
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ixgbe
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/i40e/base
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/i40e
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/common/iavf
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/iavf
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ice/base
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/ice
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/e1000
-	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/e1000/base
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/intel/ixgbe/base
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/intel/ixgbe
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/intel/i40e/base
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/intel/i40e
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/intel/iavf/base
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/intel/iavf
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/intel/ice/base
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/intel/ice
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/intel/e1000/base
+	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/net/intel/e1000
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/dpdk/drivers/bus/pci
 	${CMAKE_CURRENT_SOURCE_DIR}/deps/luajit/src
 	${CMAKE_CURRENT_SOURCE_DIR}/lib

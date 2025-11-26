@@ -27,7 +27,7 @@ void ice_reset_timer(int port){
 
 	hw = ICE_DEV_PRIVATE_TO_HW(rte_eth_devices[port].data->dev_private);
 
-	status = ice_ptp_init_time(hw, 0);
+	status = ice_ptp_init_time(hw, 0, true);
 
 	if(status != ICE_SUCCESS){
 		printf("Error while resetting PHY and Controller time registers!\n");
