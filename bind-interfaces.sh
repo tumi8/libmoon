@@ -2,6 +2,7 @@
 
 MLX5=false
 MLX4=false
+IGB=false
 
 while :; do
         case $1 in
@@ -17,6 +18,10 @@ while :; do
                         echo "Binding applicable NICS to mlx4_core"
                         MLX4=true
                         ;;
+                -i|--igb)
+                        echo "Binding applicable NICS to igb_uio"
+                        IGB=true
+                        ;;
                 -?*)
                         printf 'WARN: Unknown option (abort): %s\n' "$1" >&2
                         exit
@@ -31,18 +36,32 @@ done
 cd $(dirname "${BASH_SOURCE[0]}")
 cd deps/dpdk
 
-modprobe uio
-(lsmod | grep igb_uio > /dev/null) || insmod ../dpdk-kmods/linux/igb_uio/igb_uio.ko
-
 i=0
-for id in $(python3 usertools/dpdk-devbind.py --status | grep -v Active | grep -v ConnectX | grep unused=igb_uio | cut -f 1 -d " ")
-do
-	echo "Binding interface $id to DPDK"
-	python3 usertools/dpdk-devbind.py  --bind=igb_uio $id
-	i=$(($i+1))
-done
 
+if $IGB ; then
+	modprobe uio && ((lsmod | grep igb_uio > /dev/null) || insmod ../dpdk-kmods/linux/igb_uio/igb_uio.ko)
 
+	if [ $? -ne 0 ]; then
+		printf "WARN: Could not load igb uio kernel modules. Try to load them manually by executing: modprobe uio && ((lsmod | grep igb_uio > /dev/null) || insmod ../dpdk-kmods/linux/igb_uio/igb_uio.ko)" >&2
+	fi
+
+	for id in $(python3 usertools/dpdk-devbind.py --status | grep -v Active | grep -v ConnectX | grep "unused=.*igb_uio" | cut -f 1 -d " ")
+	do
+		echo "Binding interface $id to DPDK (igb_uio)"
+		python3 usertools/dpdk-devbind.py  --bind=igb_uio $id
+		i=$(($i+1))
+	done
+else
+	modprobe vfio
+	modprobe vfio-pci
+
+	for id in $(python3 usertools/dpdk-devbind.py --status | grep -v Active | grep -v ConnectX | grep "unused=.*vfio-pci" | cut -f 1 -d " ")
+	do
+		echo "Binding interface $id to DPDK"
+		python3 usertools/dpdk-devbind.py  --bind=vfio-pci $id
+		i=$(($i+1))
+	done
+fi
 if $MLX5 ; then
 	modprobe -a ib_uverbs mlx5_core mlx5_ib
 	if [ $? -ne 0 ]; then
