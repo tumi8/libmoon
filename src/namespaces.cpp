@@ -1,6 +1,7 @@
 #include <cstdint>
 #include <unordered_map>
 #include <mutex>
+#include <string>
 
 // note: namespaces aka 'global maps' are not meant to be fast
 
