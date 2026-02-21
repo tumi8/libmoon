@@ -377,12 +377,12 @@ function rxCounter:getStats(forceUpdate)
 end
 
 --- Device-based counter
-function devRxCounter:getThroughput() 
-    return self.dev:getRxStats() 
-end 
+function devRxCounter:getThroughput()
+    return self.dev:getRxStats()
+end
 
-function devRxCounter:clearThroughput() 
-    return self.dev:clearRxStats() 
+function devRxCounter:clearThroughput()
+    return self.dev:clearRxStats()
 end
 
 --- Packet-based counter
@@ -453,8 +453,14 @@ function mod:newDevTxCounter(name, dev, format, file)
 	local obj = newCounter("dev", name, dev, format, file, "tx")
 	obj.sleep = 50
 	setmetatable(obj, devTxCounter)
+    obj:clearThroughput()
 	obj:getThroughput() -- reset stats on the NIC
 	return obj
+end
+
+-- Similiar to clearRxStats
+function devTxCounter:clearThroughput()
+       return self.dev:clearTxStats()
 end
 
 --- Create a new tx counter that can be updated by passing packet buffers to it.
@@ -629,4 +635,3 @@ end
 __LIBMOON_STATS_TASK = statsTask
 
 return mod
-

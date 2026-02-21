@@ -64,6 +64,18 @@ function dev:clearRxStats()
 	return
 end
 
+-- clear TX counters.  We want to clear the s/w statistics and also reg read to clear the h/w level
+function dev:clearTxStats()
+       -- Read the hardware registers to clear them
+       dpdkc.read_reg32(self.id, GPTC)
+       dpdkc.read_reg32(self.id, GOTCL)
+       dpdkc.read_reg32(self.id, GOTCH)
+       -- Reset the software accumulation counters
+       self.txPkts = 0ULL
+       self.txBytes = 0ULL
+       return
+end
+
 -- necessary because of clear-on-read registers and the interaction with the normal rte_eth_stats_get() call
 function dev:getTxStats()
 	self.txPkts = (self.txPkts or 0ULL) + dpdkc.read_reg32(self.id, GPTC)
