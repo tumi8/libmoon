@@ -586,6 +586,10 @@ function dev:clearRxStats()
 	return
 end
 
+function dev:clearTxStats()
+	return
+end
+
 function dev:stop()
 	self.initialized = false
 	self:store()
